@@ -29,10 +29,10 @@ import MDTypography from "components/MDTypography";
 
 function Footer() {
   return (
-    <MDBox component="footer" py={6}>
+    <MDBox component="footer" py={3}>
       <Grid container justifyContent="center">
         <Grid item xs={10} lg={8}>
-          <MDBox display="flex" justifyContent="center" flexWrap="wrap" mb={3}>
+          <MDBox display="flex" justifyContent="center" flexWrap="wrap" mb={1}>
             <MDBox mr={{ xs: 2, lg: 3, xl: 6 }}>
               <MDTypography
                 component="a"

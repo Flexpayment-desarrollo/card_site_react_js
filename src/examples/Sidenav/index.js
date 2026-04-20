@@ -49,7 +49,7 @@ import {
 } from "context";
 import { ModalConfirmation } from "Global/ModalConfirmation";
 import { deleteStorage } from "Global/Expressions";
-import { logOut } from "components/Views/Auth/Authentication/Repository/FormMailService";
+import { logOut } from "Services/Auth/FormMailService";
 
 function Sidenav({ color, brand, brandName, routes, ...rest }) {
   const navigate = useNavigate();
@@ -64,7 +64,6 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
   const itemParentName = items[1];
   const itemName = items[items.length - 1];
   const [loading, setLoading] = useState(true);
-
   const [modalConfirmacionGuardar, setModalConfirmacionGuardar] = useState(false);
   const [message, setMessage] = useState({
     isShow: false
@@ -82,8 +81,9 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
   /*Método que asigna un cliente a un ejecutivo*/
   const cerrarSesion = async () => {
     setLoading(true);
-        navigate('/SignIn');
-        return;
+    localStorage.removeItem("Authentication");
+    navigate('/SignIn');
+    return;
     try {
       await logOut().then((result) => {
         setLoading(false);

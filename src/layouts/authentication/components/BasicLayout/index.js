@@ -35,21 +35,12 @@ import MDTypography from "components/MDTypography";
 
 function BasicLayout({ image, children }) {
   return (
-    <PageLayout background="white">
-      {/* <DefaultNavbar
-        routes={pageRoutes}
-        action={{
-          type: "external",
-          route: "https://creative-tim.com/product/material-dashboard-pro-react",
-          label: "buy now",
-        }}
-        transparent
-        light
-      /> */}
+    <PageLayout>
       <MDBox
-        position="absolute"
         width="100%"
         minHeight="100vh"
+        display="flex"
+        flexDirection="column"
         sx={{
           backgroundImage: ({ functions: { linearGradient, rgba }, palette: { gradients } }) =>
             image &&
@@ -60,18 +51,21 @@ function BasicLayout({ image, children }) {
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
+          backgroundAttachment: "fixed",
         }}
-      />
-      <MDBox px={1} width="100%" height="100vh" mx="auto">
-        <Grid container spacing={1} justifyContent="center" alignItems="center" height="100%">
-          <Grid item xs={11} sm={9} md={5} lg={4} xl={3}>
-            {children}
+      >
+        <MDBox px={1} width="100%" sx={{ flex: 1, display: "flex", alignItems: "center" }}>
+          <Grid container spacing={1} justifyContent="center" py={4}>
+            <Grid item xs={11} sm={9} md={5} lg={4} xl={3}>
+              {children}
+            </Grid>
           </Grid>
-        </Grid>
+        </MDBox>
+
+        <MDBox width="100%">
+          <Footer />
+        </MDBox>
       </MDBox>
-      
-      <Footer />
-     
     </PageLayout>
   );
 }

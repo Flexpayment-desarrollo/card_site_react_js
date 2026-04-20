@@ -194,7 +194,7 @@ function DashboardNavbar({ absolute, light, isMini, reloadMenu, refreshHijo }) {
 
 
             {client !== null ?
-              (rutaCompleta === "/Client/Product" || rutaCompleta === "/Client/Detail") ?
+              (rutaCompleta === "/Cards/Product" || rutaCompleta === "/Cards/Detail") ?
                 <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
                   <Box sx={{
                     flex: 1,

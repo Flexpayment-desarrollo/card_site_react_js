@@ -73,7 +73,7 @@ import Icon from "@mui/material/Icon";
 
 // Images
 import profilePicture from "assets/images/team-3.jpg";
-import View_Card from "viewV2/Client/List/View_Cards";
+import View_Card from "View/Card/View_Cards";
 
 const routes = [
   {

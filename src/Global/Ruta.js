@@ -1,21 +1,24 @@
 import React, { useState } from "react";
 import routes from "routes";
 import theme from "assets/theme";
-import Error from "components/Views/PageError";
-import FormEmail from "components/Views/Auth/Authentication/FormEmail";
-import Analytics from "layouts/dashboards/analytics";
-import MenuNew from "components/Views/Menu";
-import View_Card from "viewV2/Client/List/View_Cards";
-import ProtectedRoute from "components/Views/Auth/Authentication/ProtectedRoute";
-import ConfirmationSMS from "components/Views/Auth/Confirmation/ConfirmationSMS";
-import Confirmation from "components/Views/Auth/Confirmation/Confirmation";
-import BrokenLink from "components/Views/Auth/BrokenLink";
-import RecoverSMS from "components/Views/Auth/RecoverPassword/RecoverSMS";
-import Recover from "components/Views/Auth/RecoverPassword/Recover";
-import RecoverPassword from "components/Views/Auth/RecoverPassword/RecoverPassword";
+import MenuNew from "View/Menu";
+import Error from "View/PageError";
+import FormEmail from "View/Auth/Authentication/FormEmail";
+import Confirmation from "View/Auth/Confirmation/Confirmation";
+import ConfirmationSMS from "View/Auth/Confirmation/ConfirmationSMS";
+import ProtectedRoute from "View/Auth/Authentication/ProtectedRoute";
+import RecoverSMS from "View/Auth/RecoverPassword/RecoverSMS";
+import BrokenLink from "ComponentsEasy/Auth/BrokenLink";
+import RecoverPassword from "View/Auth/RecoverPassword/RecoverPassword";
+import Recover from "View/Auth/RecoverPassword/Recover";
+import View_Card from "View/Card/View_Cards";
+import ScreenSuccess from "ComponentsEasy/Auth/ScreenSuccess";
+import View_ValidateCode from "View/Auth/Registration/View_ValidateCode";
 import { useMaterialUIController } from "context";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CssBaseline, ThemeProvider } from "@mui/material";
+import { Registration } from "View/Auth/Registration/Registration";
+import Component_ScreenSuccessRecover from "ComponentsEasy/Auth/Component_ScreenSuccessRecover";
 
 const rutasMenu = [];
 
@@ -64,8 +67,8 @@ const Ruta = () => {
                {getRoutes(routes)}
                <Route path="SignIn" element={<FormEmail setUserLogin={setUserLogin} />} />
                <Route exact path="/" element={<View_Card reloadMenu={reloadMenu} />} />
-               <Route path="Client" element={<View_Card reloadMenu={reloadMenu} />} />
-               <Route exact path="/dashboards/analytics" element={<Analytics />} key="analytics" />
+               <Route path="Cards" element={<View_Card reloadMenu={reloadMenu} />} />
+               <Route path="Registration" element={<Registration reloadMenu={reloadMenu} />} />
                <Route exact path='confirmacion' element={<Confirmation />} />
                <Route exact path='confirmacionSMS'
                   element={
@@ -83,9 +86,21 @@ const Ruta = () => {
                <Route exact path='recover' element={<Recover />} />
                <Route exact path='recoverSMS'
                   element={
-                     <ProtectedRoute userLogin={userLogin}>
+                     // <ProtectedRoute userLogin={userLogin}>
                         <RecoverSMS userLogin={userLogin} />
-                     </ProtectedRoute>
+                     // </ProtectedRoute>
+                  } />
+               <Route exact path='validateCode'
+                  element={
+                     <View_ValidateCode userLogin={userLogin} />
+                  } />
+               <Route exact path='success'
+                  element={
+                     <ScreenSuccess userLogin={userLogin} />
+                  } />
+                    <Route exact path='successRecover'
+                  element={
+                     <Component_ScreenSuccessRecover userLogin={userLogin} />
                   } />
                <Route exact path='ErrorLink' element={<BrokenLink />} />
                <Route exact path='dashboard' element={<MenuNew />} />

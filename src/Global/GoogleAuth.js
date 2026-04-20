@@ -22,10 +22,19 @@ export const GoogleAuth = ({ keyDetect, enter, login, autofocus }) => {
         const key = event.key
         const { name } = event.target
         if (key === "0" || key === "1" || key === "2" || key === "3" || key === "4" || key === "5" || key === "6" || key === "7" || key === "8" || key === "9") {
-            setPinValue({
+            // setPinValue({
+            //     ...pinValue,
+            //     [name]: key
+            // })
+
+            const nextValue = {
                 ...pinValue,
                 [name]: key
-            })
+            };
+            setPinValue(nextValue);
+            keyDetect(nextValue);
+
+
             switch (name) {
                 case "Pin1":
                     refPin2.current.focus()
