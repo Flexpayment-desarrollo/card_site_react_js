@@ -160,6 +160,8 @@ export async function registerCard(datos) {
     let data = {
         CardNumber: encryptPassword(datos.CardNumber),
         Expires: encryptPassword(datos.Expires),
+        Longitud: datos.Longitud,
+        Latitud: datos.Latitud,
     };
     return new Promise((resolve, reject) => {
         var newToken = sessionStorage.getItem('newToken');
@@ -320,6 +322,66 @@ export async function getIdentification() {
     return new Promise((resolve, reject) => {
         const axios = require('axios');
         axios.get(global.Constants.urlCatalogos + global.Constants.port + '/CatalogoProspecto/IdentificacionOficial',
+            {
+                headers: {
+                    'Credential': global.Constants.credential
+                }
+            }).then((respose) => {
+                if (respose.status === 200) {
+                    if (respose.data.code === 0) {
+                        return respose.data;
+                    }
+                    else {
+                        throw respose.data.businessMeaning;
+                    }
+                }
+                return respose.data;
+            }).then((data) => {
+                resolve(data);
+            }).catch((err) => {
+                reject(err);
+            });
+    });
+}
+
+export async function transferirCardToCard(datos) {
+    let data = {
+        Id: datos.Id,
+        NIP: encryptPassword(datos.NIP),
+        Amount: datos.Amount,
+        Latitud: datos.Latitud,
+        Longitud: datos.Longitud,
+        CardDestination: encryptPassword(datos.CardDestination)
+    };
+    return new Promise((resolve, reject) => {
+        var newToken = sessionStorage.getItem('newToken');
+        const axios = require('axios');
+        axios.post(global.Constants.url + global.Constants.port + '/card/TransferCardToCard ', data,
+            {
+                headers: {
+                    'Authorization': 'bearer ' + newToken,
+                    'Credential': global.Constants.credential
+                }
+            }).then((response) => {
+                if (response.status === 200) {
+                    ///solo si la api toco la capa logica se genera un nuevo token
+                    if (response.data.code !== 1000 && response.data.code !== 5000)
+                        sessionStorage.setItem('newToken', response.data.token);
+                }
+                /// se regresa el objeto completo
+                return response.data;
+            }).then((data) => {
+                resolve(data);
+            }).catch((err) => {
+                reject(err);
+            });
+    });
+}
+
+export async function getBanks() {
+    return new Promise((resolve, reject) => {
+        const axios = require('axios');
+        axios.get(global.Constants.urlCatalogos + global.Constants.port + "/STP/Banks",
             {
                 headers: {
                     'Credential': global.Constants.credential

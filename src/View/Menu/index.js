@@ -8,13 +8,14 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import BadgeIcon from '@mui/icons-material/Badge';
 import { setMiniSidenav } from "context";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useMaterialUIController } from "context";
 import { deleteStorage } from "Global/Expressions";
 import { AccountTree, AddCard, Assessment, CreditCard, CreditScore, DeliveryDining, FactCheck, FactCheckRounded, ManageAccounts, MonetizationOn, Payments, PersonAdd } from "@mui/icons-material";
 
 const MenuNew = () => {
     const navigate = useNavigate(); // react-router-dom v6
+    const Authentication = JSON.parse(sessionStorage.getItem("Authentication"));
     const [controller, dispatch] = useMaterialUIController();
     const {
         miniSidenav,
@@ -73,10 +74,11 @@ const MenuNew = () => {
         //     if (Authentication !== null) {
         rutasMenu.push({
             type: "collapse",
-            name: "Prueba",
+            name: Authentication !== null ? Authentication.nombre + " " + Authentication.apellidoPaterno : "",
             key: "usuario",
             route: "/Cards",
-            icon: <MDAvatar src={"data:image/png;base64,"} alt="Brooklyn Alice" size="md" />,
+            // icon: <MDAvatar src={"data:image/png;base64,"} alt="Brooklyn Alice" size="md" />,
+            icon: <MDAvatar src={Authentication !== null ? "data:image/png;base64," + Authentication.foto : ""}></MDAvatar>,
             noCollapse: true,
         });
 
@@ -88,7 +90,7 @@ const MenuNew = () => {
             type: "collapse",
             name: "Tarjetas",
             // key: item.idModulo,
-                route: "/Cards",
+            route: "/Cards",
             icon: chooseIcon(),
             noCollapse: true,
         });
@@ -111,13 +113,13 @@ const MenuNew = () => {
 
         // if (principal[0].menu !== "") {
 
-            // rutasMenu.push({
-            //     type: "collapse",
-            //     // name: principal[0].menu,
-            //     // key: principal[0].idModulo,
-            //     // icon: chooseIcon(principal[0].menu),
-            //     collapse: collapse
-            // });
+        // rutasMenu.push({
+        //     type: "collapse",
+        //     // name: principal[0].menu,
+        //     // key: principal[0].idModulo,
+        //     // icon: chooseIcon(principal[0].menu),
+        //     collapse: collapse
+        // });
         // }
         // });
 
@@ -142,15 +144,15 @@ const MenuNew = () => {
         <>
             {/* {
                 sessionStorage.length !== 0 ? */}
-                    <Sidenav
-                        color={sidenavColor}
-                        brand={(transparentSidenav && !darkMode) || whiteSidenav ? brandDark : brandWhite}
-                        brandName="Easy Transfer"
-                        routes={listMenu}
-                        onMouseEnter={handleOnMouseEnter}
-                        onMouseLeave={handleOnMouseLeave}
-                    />
-                    {/* : null
+            <Sidenav
+                color={sidenavColor}
+                brand={(transparentSidenav && !darkMode) || whiteSidenav ? brandDark : brandWhite}
+                brandName="EasyCard"
+                routes={listMenu}
+                onMouseEnter={handleOnMouseEnter}
+                onMouseLeave={handleOnMouseLeave}
+            />
+            {/* : null
             } */}
         </>
     );

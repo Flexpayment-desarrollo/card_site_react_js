@@ -3,7 +3,7 @@ import MDTypography from "components/MDTypography";
 import MDButton from "components/MDButton";
 import MDBox from "components/MDBox";
 
-export const Component_CVVDinamico = ({ segundosIniciales = 4000, alTerminar }) => {
+export const Component_CVVDinamico = ({ segundosIniciales = 240, alTerminar }) => {
   const [segundos, setSegundos] = useState(segundosIniciales);
   const [activo, setActivo] = useState(true);
 
@@ -13,11 +13,11 @@ export const Component_CVVDinamico = ({ segundosIniciales = 4000, alTerminar }) 
     if (activo && segundos > 0) {
       intervalo = setInterval(() => {
         setSegundos((prev) => prev - 1);
-      }, 4000);
+      }, 1000);
     } else if (segundos === 0) {
       setActivo(false);
       clearInterval(intervalo);
-      if (alTerminar) alTerminar(); // Ejecuta una función cuando llegue a 0
+      if (alTerminar) alTerminar();
     }
 
     return () => clearInterval(intervalo);
@@ -35,27 +35,40 @@ export const Component_CVVDinamico = ({ segundosIniciales = 4000, alTerminar }) 
     setActivo(true);
   };
 
-
   return (
     <>
-      <MDBox textAlign="center" mt={2}>
+      <MDBox textAlign="center" mt={1}>
         {segundos > 0 ? (
-          <MDTypography variant="button" color="text" fontWeight="regular">
+          <MDTypography
+            variant="button"
+            fontWeight="regular"
+            color="text"
+          >
             El CVV expira en:{" "}
-            <MDTypography variant="button" color="info" fontWeight="bold">
+            <MDTypography
+              variant="button"
+              fontWeight="bold"
+              color="info"
+              fontSize="10px"
+            >
               {formatearTiempo(segundos)}
             </MDTypography>
           </MDTypography>
         ) : (
           <MDBox>
-            <MDTypography variant="button" color="error" display="block" mb={1}>
+            <MDTypography
+              variant="caption text"
+              display="block"
+              mb={1}
+              color="info"
+            >
               El CVV ha expirado
             </MDTypography>
             <MDButton
               variant="text"
-              color="info"
               size="small"
               onClick={reenviarCodigo}
+              color="info"
             >
               REENVIAR CVV
             </MDButton>

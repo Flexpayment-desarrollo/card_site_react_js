@@ -88,7 +88,6 @@ export async function calcRFC(person) {
                 if (response.status === 200) {
                     ///solo si la api toco la capa logica se genera un nuevo token
                     if (response.data.code !== 1000 && response.data.code !== 5000);
-                    //console.log(response)
                     //sessionStorage.setItem('newToken', response.data.token);
                 }
                 /// se regresa el objeto completo
@@ -101,8 +100,7 @@ export async function calcRFC(person) {
     });
 }
 
-// Metodo para enviar el sms
-
+// Metodo para enviar el SMS
 export async function validateRecover(email) {
     const correo = {
         Correo: encryptPassword(email)

@@ -59,6 +59,7 @@ import Alert from "Global/Alert";
 
 function DashboardNavbar({ absolute, light, isMini, reloadMenu, refreshHijo }) {
   const [client, setClient] = useState(JSON.parse(sessionStorage.getItem('Client')));
+  const Authentication = JSON.parse(sessionStorage.getItem("Authentication"));
   const [navbarType, setNavbarType] = useState();
   const [controller, dispatch] = useMaterialUIController();
   const { miniSidenav, transparentNavbar, fixedNavbar, openConfigurator, darkMode } = controller;
@@ -168,67 +169,62 @@ function DashboardNavbar({ absolute, light, isMini, reloadMenu, refreshHijo }) {
   return (
     <>
       {message.isShow && <Alert alert={message.type} message={message.text} onClose={clearMessage} open={message.isShow} />}
-  
+
       <AppBar
         position={absolute ? "absolute" : navbarType}
         color="inherit"
         sx={(theme) => navbar(theme, { transparentNavbar, absolute, light, darkMode })}
       >
-        <Toolbar sx={(theme) => ({
+        {/* <Toolbar sx={(theme) => ({
           ...navbarContainer(theme),
         })}>
-          <MDBox color="inherit" mb={{ xs: 1, md: 0 }} sx={(theme) => ({
-            ...navbarRow(theme, { isMini }),
-            flex: 1,
-            display: 'flex',
-          })}>
-            {/* Ruta visual en el dashboard */}
-            {/* <Breadcrumbs icon="home" title="Hola Bienvenid@ Adeasy" route={route} light={light} /> */}
-            <IconButton sx={navbarDesktopMenu} onClick={handleMiniSidenav} size="small" disableRipple>
-              <Icon fontSize="medium" sx={iconsStyle}>
-                {miniSidenav ? "menu_open" : "menu"}
-              </Icon>
-            </IconButton>
-            &nbsp;&nbsp;&nbsp;&nbsp;
+          <MDBox
+            sx={{
+              display: "flex",
+              flexDirection: "row", // Fuerza la línea horizontal
+              alignItems: "center", // Centra verticalmente icono y texto
+              width: "100%",
+              justifyContent: "flex-start",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <IconButton sx={navbarDesktopMenu} onClick={handleMiniSidenav} size="small" disableRipple>
+                <Icon fontSize="medium" sx={iconsStyle}>
+                  {miniSidenav ? "menu_open" : "menu"}
+                </Icon>
+              </IconButton>
 
+              {
+                (rutaCompleta === "/Cards" || rutaCompleta === "/Card") ?
+                  <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
 
-
-            {client !== null ?
-              (rutaCompleta === "/Cards/Product" || rutaCompleta === "/Cards/Detail") ?
-                <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
-                  <Box sx={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}>
+                    <label
+                      className="title"
+                      style={{
+                        margin: 0,
+                        fontSize: '0.9rem', // Un poco más pequeño para que quepa en celulares
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >                      {" "}
+                      Hola{" "}
+                      {Authentication !== null ? Authentication.nombre + " " + Authentication.apellidoPaterno : ""}{" "}
+                    </label>
                   </Box>
-                </Box>
-                :
-                <></>
-              :
-              <></>
-            }
+                  :
+                  <></>
+   
+              }
+
+            </Box>
+
+            <Box sx={{ flexGrow: 1 }} />
 
           </MDBox>
           {isMini ? null : (
             <MDBox sx={(theme) => navbarRow(theme, { isMini })}>
-              {/* <MDBox pr={1}>
-              <MDInput label="Search here" />
-            </MDBox> */}
               <MDBox color={light ? "white" : "inherit"}>
-                {/* <Link to="/authentication/sign-in/basic">
-                <IconButton sx={navbarIconButton} size="small" disableRipple>
-                  <Icon sx={iconsStyle}>account_circle</Icon>
-                </IconButton>
-              </Link> */}
-                <Tooltip
-                  placement="top"
-                  title="Usuario"
-                >
-                  <IconButton sx={{ navbarIconButton, fontSize: 50 }} onClick={openModal} size="large" disableRipple>
-                    <Icon fontSize="large">account_circle</Icon>
-                  </IconButton>
-                </Tooltip>
                 <IconButton
                   size="small"
                   disableRipple
@@ -240,15 +236,6 @@ function DashboardNavbar({ absolute, light, isMini, reloadMenu, refreshHijo }) {
                     {miniSidenav ? "menu_open" : "menu"}
                   </Icon>
                 </IconButton>
-                {/* <IconButton
-                size="small"
-                disableRipple
-                color="inherit"
-                sx={navbarIconButton}
-                onClick={handleConfiguratorOpen}
-              >
-                <Icon sx={iconsStyle}>settings</Icon>
-              </IconButton> */}
                 <IconButton
                   size="small"
                   disableRipple
@@ -259,15 +246,65 @@ function DashboardNavbar({ absolute, light, isMini, reloadMenu, refreshHijo }) {
                   variant="contained"
                   onClick={handleOpenMenu}
                 >
-                  {/* Icono de notificaciones */}
-                  {/* <MDBadge badgeContent={9} color="error" size="xs" circular>
-                  <Icon sx={iconsStyle}>notifications</Icon>
-                </MDBadge> */}
                 </IconButton>
                 {renderMenu()}
               </MDBox>
             </MDBox>
           )}
+        </Toolbar> */}
+
+
+
+        <Toolbar sx={(theme) => ({ ...navbarContainer(theme) })}>
+          <MDBox
+            color="inherit"
+            sx={(theme) => ({
+              ...navbarRow(theme, { isMini }),
+              display: "flex !important",
+              flexDirection: "row !important", 
+              alignItems: "center !important",
+              width: "100%",
+              justifyContent: "space-between", 
+            })}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <IconButton sx={navbarDesktopMenu} onClick={handleMiniSidenav} size="small" disableRipple>
+                <Icon fontSize="medium" sx={iconsStyle}>
+                  {miniSidenav ? "menu_open" : "menu"}
+                </Icon>
+              </IconButton>
+
+              {(rutaCompleta === "/Cards" || rutaCompleta === "/Card") && (
+                <Box sx={{ ml: 1, display: "flex", alignItems: "center" }}>
+                  <label
+                    className="title"
+                  >
+                    Hola {Authentication !== null ? Authentication.nombre : ""}
+                  </label>
+                </Box>
+              )}
+            </Box>
+
+            <MDBox color={light ? "white" : "inherit"} sx={{ display: "flex", alignItems: "center" }}>
+              {!isMini && (
+                <>
+                  <IconButton
+                    size="small"
+                    disableRipple
+                    color="inherit"
+                    sx={navbarMobileMenu}
+                    onClick={handleMiniSidenav}
+                  >
+                    <Icon sx={iconsStyle} fontSize="medium">
+                      {miniSidenav ? "menu_open" : "menu"}
+                    </Icon>
+                  </IconButton>
+
+                  {renderMenu()}
+                </>
+              )}
+            </MDBox>
+          </MDBox>
         </Toolbar>
       </AppBar>
     </>);

@@ -1,36 +1,32 @@
-// @mui material components
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import { grey } from "@mui/material/colors";
 import { IconButton, Tooltip, useMediaQuery, useTheme } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
-
-// Material Dashboard 2 PRO React components
+import { ArrowBack, Error } from "@mui/icons-material";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import MDButton from "components/MDButton";
 import MDInput from "components/MDInput";
 import MDAlert from "components/MDAlert";
-
 import dayjs from "dayjs";
 import validator from 'validator';
 import Loading from "Global/Loading/Loading";
-import LogoInovag from "View/LogoInovag";
-import bgImage from "assets/images/illustrations/slide.jpg";
-import BasicLayout from "layouts/authentication/components/BasicLayout";
+import LogoEasy from "Global/LogoEasy";
+import Footer from "layouts/authentication/components/Footer";
+import PageLayout from "examples/LayoutContainers/PageLayout";
 import { useState } from "react";
 import { TbCalculator } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { deleteStorage } from "Global/Expressions";
 import { numericValid } from "Global/Expressions";
 import { alphanumericSpaceValid } from "Global/Expressions";
 import { alphanumericValid_ } from "Global/Expressions";
 import { calcRFC } from "Services/Auth/Service_Register";
 import { validateCode } from "Services/Auth/Service_Register";
-import { ModalConfirmation } from "Global/ModalConfirmation";
 import { emailValid } from "Global/Expressions";
+import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { ModalEnviar } from "Global/ModalEnviar";
 
 const Data = {
     Nombre: "",
@@ -44,13 +40,13 @@ const Data = {
     Password: ""
 }
 
-export const Registration = () => {
+export const View_Registration = () => {
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState(Data);
-    const [dateBirth, setDateBirth] = useState(dayjs(null));
+    const [dateBirth, setDateBirth] = useState(null);
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isAlertValide, setIsAlertValide] = useState(false);
     const [modalConfirmarGuardar, setModalConfirmarGuardar] = useState(false);
@@ -166,7 +162,7 @@ export const Registration = () => {
             } else {
                 setMessage({
                     text: result.businessMeaning,
-                    type: 'danger',
+                    type: 'error',
                     isShow: true
                 });
             }
@@ -179,7 +175,7 @@ export const Registration = () => {
                 } else {
                     setMessage({
                         text: error.message,
-                        type: 'danger',
+                        type: 'error',
                         isShow: true
                     });
                 }
@@ -201,17 +197,17 @@ export const Registration = () => {
                     if (data.code === 0) {
                         setMessage({
                             isShow: true,
-                            text: 'El Mensaje ha sido enviado, se te direccionará a otra pantalla. Espere..',
+                            text: 'PIN enviado, se te redireccionará a otra pantalla, Espera...',
                             type: 'success',
                         });
                         setIsAlertValide(true);
-                        setTimeout(() => navigate('/validateCode', { state: { formData: formData } }), 2000);
+                        setTimeout(() => navigate('/validateCode', { state: { formData: formData } }), 3000);
                     }
                     else {
                         setMessage({
                             isShow: true,
                             text: data.businessMeaning || "Ocurrió un error inesperado",
-                            type: 'danger',
+                            type: 'error',
                         });
                         setIsAlertValide(true);
                     }
@@ -232,7 +228,7 @@ export const Registration = () => {
             setMessage({
                 isShow: true,
                 text: error.name + ' ' + error.message,
-                type: 'danger',
+                type: 'error',
             });
             setIsAlertValide(true);
         }
@@ -427,7 +423,7 @@ export const Registration = () => {
         setMessage({
             isShow: false,
             text: "",
-            type: "info"
+            type: ""
         });
     };
 
@@ -448,10 +444,11 @@ export const Registration = () => {
         <>
             {loading && <Loading show={loading} />}
             {/* {message.isShow && ( <Alert alert={message.type} message={message.text} onClose={clearMessage} open={message.isShow} />)} */}
-            {modalConfirmarGuardar && <ModalConfirmation showModal={modalConfirmarGuardar} message="¿Estás seguro de crear el usuario?" closeModal={handleCloseConfirmarGuardar}></ModalConfirmation>}
-            <BasicLayout illustration={bgImage}>
+            {modalConfirmarGuardar && <ModalEnviar showModal={modalConfirmarGuardar} message="Se enviará un PIN vía SMS al celular registrado" closeModal={handleCloseConfirmarGuardar}></ModalEnviar>}
+            {/* <BasicLayout illustration={bgImage}> */}
+            <PageLayout>
                 <MDBox
-                    px={isMobile ? 1 : 2} // Padding lateral 
+                    px={isMobile ? 1 : 2} 
                     width="100%"
                     display="flex"
                     justifyContent="center"
@@ -471,10 +468,19 @@ export const Registration = () => {
                         {/* Logo Centrado */}
                         <MDBox sx={{ textAlign: "center", mt: 3, mb: 1 }}>
                             <MDBox sx={{ width: isMobile ? "60%" : "100%", margin: "auto" }}>
-                                <LogoInovag />
+                                <LogoEasy />
                             </MDBox>
                         </MDBox>
-
+                        {/* Título EasyCard */}
+                        <MDBox sx={{ textAlign: "center", mb: 2 }}>
+                            <MDTypography
+                                variant={isMobile ? "h4" : "h3"}
+                                fontWeight="bold"
+                                sx={{ color: grey[800], letterSpacing: "1px" }}
+                            >
+                                EASYCARD
+                            </MDTypography>
+                        </MDBox>
 
                         {/* Cabecera con Flecha y Título */}
                         <MDBox p={3} display="flex" alignItems="center">
@@ -497,7 +503,7 @@ export const Registration = () => {
                                     fontWeight="bold"
                                     sx={{ color: grey[800] }}
                                 >
-                                    Registrarse
+                                    REGISTRO
                                 </MDTypography>
                             </MDBox>
                         </MDBox>
@@ -655,14 +661,22 @@ export const Registration = () => {
                                 </Grid>
                             </Grid>
 
-                            {isAlertValide && message.isShow && (
-                                <MDBox px={isMobile ? 3 : 1} mt={2}>
+                            {isAlertValide && (
+                                <MDBox mt={1}>
                                     <MDAlert
-                                        color={message.type === "error" ? "danger" : message.type}
-                                        dismissible
-                                        onClose={clearMessage}
+                                        color={message.type === "error" ? "error" : message.type}
                                     >
-                                        <MDTypography variant="body" color="white">
+                                        <MDTypography
+                                            variant="caption"
+                                            color="white"
+                                            display="flex"
+                                            alignItems="center"
+                                            justifyContent="center"
+                                            width="100%"
+                                        >
+                                            <Error
+                                                fontSize="small" />
+                                            &nbsp;
                                             {message.text}
                                         </MDTypography>
                                     </MDAlert>
@@ -675,7 +689,7 @@ export const Registration = () => {
                                     sx={{
                                         backgroundColor: "#ff5f00 !important",
                                         height: "50px", // Botón más alto y fácil de presionar
-                                        minWidth: isMobile ? "100%" : "200px", // Ancho completo en móvil
+                                        minWidth: isMobile ? "100%" : "100px", // Ancho completo en móvil
                                         borderRadius: "10px"
                                     }}
                                     onClick={confirmar}>
@@ -687,7 +701,9 @@ export const Registration = () => {
                         </MDBox>
                     </Card>
                 </MDBox>
-            </BasicLayout>
+                <Footer />
+            </PageLayout>
+            {/* </BasicLayout> */}
         </>
     );
 }

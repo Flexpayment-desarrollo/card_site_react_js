@@ -1,32 +1,32 @@
 import React from "react";
+import LogoEasy from "Global/LogoEasy";
 import MDBox from "components/MDBox";
 import MDButton from "components/MDButton";
-import LogoInovag from "View/LogoInovag";
 import MDTypography from "components/MDTypography";
+import Footer from "layouts/authentication/components/Footer";
+import PageLayout from "examples/LayoutContainers/PageLayout";
 import { BsCheckCircle } from "react-icons/bs";
 import { useNavigate } from 'react-router-dom';
-import { Card, useMediaQuery, useTheme } from "@mui/material";
-import BasicLayout from "layouts/authentication/components/BasicLayout";
-import bgImage from "assets/images/illustrations/slide.jpg";
 import { grey } from "@mui/material/colors";
+import { Card, useMediaQuery, useTheme } from "@mui/material";
 
-const ScreenSuccess = ({ message }) => {
+const View_ScreenSuccessRecover = () => {
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
     return (
-        <BasicLayout illustration={bgImage}>
+        // <BasicLayout illustration={bgImage}>
+        <PageLayout>
             <MDBox
-                px={2}
+                px={isMobile ? 1 : 2}
                 width="100%"
                 display="flex"
                 justifyContent="center"
                 alignItems="center"
-                minHeight="100vh"
+                py={isMobile ? 2 : 5}
             >
                 <Card sx={{
-                    // Consistente con tus otras pantallas: 450px en PC
                     width: isMobile ? "90%" : "450px",
                     minWidth: isMobile ? "100%" : "400px",
                     maxWidth: isMobile ? "100%" : "900px",
@@ -41,35 +41,31 @@ const ScreenSuccess = ({ message }) => {
                         width: "100%",
                         display: "flex",
                         justifyContent: "center",
-                        mb: 4
+                        mb: 1
                     }}>
                         <MDBox sx={{ width: isMobile ? "180px" : "220px" }}>
-                            <LogoInovag />
+                            <LogoEasy />
                         </MDBox>
                     </MDBox>
+                    <MDBox sx={{ textAlign: "center", mb: 2 }}>
+                        <MDTypography
+                            variant={isMobile ? "h4" : "h3"}
+                            fontWeight="bold"
+                            sx={{ color: grey[800], letterSpacing: "1px" }}
+                        >
+                            EASYCARD
+                        </MDTypography>
+                    </MDBox>
 
-                    {/* Icono de Éxito */}
                     <MDBox mb={3} display="flex" justifyContent="center">
                         <BsCheckCircle color="#28e60d" size={isMobile ? 100 : 120} />
                     </MDBox>
 
-                    {/* Mensajes con Tipografía del Dashboard */}
                     <MDBox mb={2}>
                         <MDTypography variant={isMobile ? "h5" : "h4"} fontWeight="bold" sx={{ color: grey[800] }}>
-                            La cuenta ha sido creada correctamente
+                            La contraseña ha sido cambiada exitosamente
                         </MDTypography>
                     </MDBox>
-
-                    <MDBox mb={4}>
-                        <MDTypography variant="body2" color="text">
-                            Ahora puede disfrutar los beneficios de{" "}
-                            <MDTypography component="span" variant="body2" fontWeight="bold" color="dark">
-                                Easy Transfer
-                            </MDTypography>
-                        </MDTypography>
-                    </MDBox>
-
-                    {/* Botón de Acción */}
                     <MDBox mt={4}>
                         <MDButton
                             variant="gradient"
@@ -82,14 +78,15 @@ const ScreenSuccess = ({ message }) => {
                             onClick={() => navigate('/SignIn')}
                         >
                             <MDTypography variant="h7" color="white" fontWeight="bold">
-                                REGRESAR A EASY TRANSFER
+                                INGRESAR A EASYCARD
                             </MDTypography>
                         </MDButton>
                     </MDBox>
                 </Card>
             </MDBox>
-        </BasicLayout>
+            <Footer />
+        </PageLayout>
     );
 }
 
-export default ScreenSuccess;
+export default View_ScreenSuccessRecover;

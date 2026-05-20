@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import MDTypography from 'components/MDTypography';
 import { Grid } from '@mui/material';
 
-/*Componente para mostrar el modal de confirmación*/
+/*Componente para ingresar el PIN*/
 export const GoogleAuth = ({ keyDetect, enter, login, autofocus }) => {
     const refPin1 = useRef(null)
     const refPin2 = useRef(null)
@@ -33,7 +33,6 @@ export const GoogleAuth = ({ keyDetect, enter, login, autofocus }) => {
             };
             setPinValue(nextValue);
             keyDetect(nextValue);
-
 
             switch (name) {
                 case "Pin1":
@@ -93,7 +92,7 @@ export const GoogleAuth = ({ keyDetect, enter, login, autofocus }) => {
         <>
             <Grid container spacing={3} p={2}>
                 <Grid item xs={12} sm={12} style={{ textAlign: "center" }} mt={-1}>
-                    <MDTypography variant="h5">Ingresa el pin</MDTypography>
+                    <MDTypography variant="h5">Ingresa el PIN</MDTypography>
                 </Grid>
                 <Grid item xs={12} sm={12} style={{ textAlign: "center" }}>
                     <Grid container>

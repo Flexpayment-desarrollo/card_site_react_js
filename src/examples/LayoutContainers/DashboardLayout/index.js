@@ -25,7 +25,7 @@ import PropTypes from "prop-types";
 import MDBox from "components/MDBox";
 
 // Material Dashboard 2 PRO React context
-import { useMaterialUIController, setLayout } from "context";
+import { useMaterialUIController, setLayout, setMiniSidenav } from "context";
 
 function DashboardLayout({ children }) {
   const [controller, dispatch] = useMaterialUIController();
@@ -34,7 +34,21 @@ function DashboardLayout({ children }) {
 
   useEffect(() => {
     setLayout(dispatch, "dashboard");
-  }, [pathname]);
+
+    // Función para manejar el estado del navbar según el ancho de pantalla
+    const handleNavbarState = () => {
+      if (window.innerWidth < 1200) {
+        // En móviles/tablets (< 1200px): FORZAR CERRADO (true)
+        setMiniSidenav(dispatch, true);
+      } else {
+        // En escritorio (>= 1200px): MANTENER ABIERTO (false)
+        setMiniSidenav(dispatch, false);
+      }
+    };
+
+    // setMiniSidenav(dispatch, true);
+    handleNavbarState();
+  }, [pathname, dispatch]);
 
   return (
     <MDBox

@@ -1,4 +1,4 @@
-.conteiner-center{
+/* .conteiner-center{
     position:"absolute"; 
     top: "39%"; 
     left:"40%";
@@ -52,5 +52,87 @@
 @keyframes rotate {
 	100% {
 		transform: rotate(360deg)
+	}
+} */
+
+
+:root {
+	--loader-size: 800px;
+	/* Tamaño para escritorio */
+}
+
+@media only screen and (max-width: 767px) {
+	:root {
+		--loader-size: 900px;
+		/* Tamaño reducido para celular */
+	}
+}
+
+.container-center {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+/* Contenedor principal centrado */
+.container-loading {
+	width: 250px;
+	height: 250px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+	margin: auto;
+}
+
+/* El Logo de EasyCard más pequeño */
+.loader-img {
+	width: 200px;
+	/* Ajustado para que quepa bien dentro del círculo de 100px */
+	height: auto;
+	z-index: 5;
+	position: relative;
+}
+
+/* El efecto de carga (Círculo de brillo) */
+.loader:before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	/* Sombras mucho más cortas para que no se vea "gigante" */
+	box-shadow:
+		0 -4px 10px #ffffff60 inset,
+		0 4px 10px #ffffff60;
+	filter: blur(2px);
+	animation: rotate 2s linear infinite;
+}
+
+/* Ajuste específico para celulares muy pequeños */
+@media only screen and (max-width: 480px) {
+	.container-loading {
+		width: 200px;
+		height: 200px;
+	}
+
+	.loader-img {
+		width: 150px;
+	}
+}
+
+@keyframes rotate {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
 	}
 }

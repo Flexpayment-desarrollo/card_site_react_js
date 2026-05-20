@@ -1,14 +1,15 @@
 import Loading from "Global/Loading/Loading";
 import MDBox from "components/MDBox";
 import MDInput from "components/MDInput";
-import LogoInovag from "View/LogoInovag";
 import MDButton from "components/MDButton";
 import MDAlert from "components/MDAlert";
 import MDTypography from "components/MDTypography";
-import login from "assets/images/illustrations/login.png";
+import Footer from "layouts/authentication/components/Footer";
+import PageLayout from "examples/LayoutContainers/PageLayout";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import BasicLayout from "layouts/authentication/components/BasicLayout";
+import LogoEasy from "Global/LogoEasy";
 import { useEffect, useRef, useState } from "react";
+import { Turnstile } from '@marsidev/react-turnstile';
 import { grey } from "@mui/material/colors";
 import { useNavigate } from "react-router-dom";
 import { encryptPassword } from "Global/EncryptPassword";
@@ -18,15 +19,17 @@ import { authValidate } from "Services/Auth/FormMailService";
 import { changePasswordExp } from "Services/Auth/FormMailService";
 import { deleteStorage } from "Global/Expressions";
 import { emailValid } from "Global/Expressions";
-import { ModalConfirmation } from "Global/ModalConfirmation";
 import { validateRecover } from "Services/Auth/Service_Register";
+import { Error } from "@mui/icons-material";
+import { ModalEnviar } from "Global/ModalEnviar";
 import { Card, Grid, IconButton, Tooltip, useMediaQuery, useTheme } from "@mui/material";
 
-const FormEmail = () => {
+const View_FormEmail = () => {
    const navigate = useNavigate();
    const theme = useTheme();
    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-   const refPass = useRef(null)
+   const refPass = useRef(null);
+   const [cloudflareToken, setCloudflareToken] = useState(null);
    const [isAlertValide, setIsAlertValide] = useState(false);
    const [loading, setLoading] = useState(false);
    const [isCorrectMail, setIsCorrectMail] = useState(true);
@@ -109,6 +112,23 @@ const FormEmail = () => {
    const validateEmailClick = async (e) => {
       if (e !== undefined)
          e.preventDefault();
+
+      if (!cloudflareToken) {
+         setIsAlertValide(true);
+         setMessage({
+            isShow: true,
+            text: "¡Error! Por favor, confirma que no eres un robot.",
+            type: 'error',
+         });
+         return;
+      }
+      else {
+         setIsAlertValide(false);
+      }
+
+      var loginValue = formLoginValue;
+      loginValue.CloudflareToken = cloudflareToken;
+
       var latitud = "22.085065";
       var longitud = "-100.931659";
       var mensage = "";
@@ -146,14 +166,23 @@ const FormEmail = () => {
       }
    }
 
-   /**Metodo de regresar pantalla login */
-   const toBack = () => {
-      setIsAlertValide(false)
-      setIsCorrectMail(true);
-      setFormLoginValue({
-         Username: formLoginValue.Username,
-         Password: '******',
-      });
+   const validateRegistrarClick = async (e) => {
+      if (e !== undefined)
+         e.preventDefault();
+
+      if (!cloudflareToken) {
+         setIsAlertValide(true);
+         setMessage({
+            isShow: true,
+            text: "¡Error! Por favor, confirma que no eres un robot.",
+            type: 'error',
+         });
+         return;
+      }
+      else {
+         setIsAlertValide(false);
+         navigate('/registration')
+      }
    }
 
    /**Metodo para validar las credenciales del usuario*/
@@ -161,7 +190,6 @@ const FormEmail = () => {
       if (e !== undefined)
          e.preventDefault();
       try {
-
          if (formLoginValue.Password.trim()) {
             setLoading(true);
             await authValidate(formLoginValue).then((data) => {
@@ -171,7 +199,6 @@ const FormEmail = () => {
                } else if (data.code === 3003) {
                   setIsChangePassword(true);
                   setIsCorrectMail(false);
-                  setIsAlertValide(true);
                   setMessage({
                      isShow: true,
                      text: data.businessMeaning,
@@ -184,20 +211,12 @@ const FormEmail = () => {
                      text: data.businessMeaning,
                      type: 'error',
                   });
-                  //setIsCorrectMail(true);
                   setFormLoginValue({
                      ...formLoginValue,
                      Password: '',
                      Pin: ''
                   });
                   setIsAlertValide(true);
-                  // setTimeout(() => {
-                  //    setIsCorrectMail(true);
-                  //    setFormLoginValue({
-                  //       Username: formLoginValue.Username,
-                  //       Password: '******',
-                  //    });
-                  // }, 2000);
                }
             }).catch((err) => {
                setMessage({
@@ -208,7 +227,12 @@ const FormEmail = () => {
                setIsAlertValide(true);
             });
          } else {
-            throw new Error('Por favor , ingresa la contraseña.');
+            setMessage({
+               isShow: true,
+               text: "Ingresa la contraseña",
+               type: 'error',
+            });
+            setIsAlertValide(true);
          }
       } catch (error) {
          setMessage({
@@ -220,7 +244,7 @@ const FormEmail = () => {
       }
    }
 
-   //  Metodo para el envíoo del mensaje
+   //  Metodo para el envío del mensaje
    const recuperarPassword = async () => {
       try {
          setLoading(true);
@@ -230,11 +254,11 @@ const FormEmail = () => {
                   setLoading(false);
                   setMessage({
                      isShow: true,
-                     text: 'El Mensaje ha sido enviado, se te direccionará a otra pantalla. Espere..',
+                     text: 'PIN enviado, se te redireccionará a otra pantalla, Espera...',
                      type: 'success',
                   });
                   setIsAlertValide(true);
-                  setTimeout(() => navigate('/recoverSMS', { state: { formLoginValue: formLoginValue } }), 3000);
+                  setTimeout(() => navigate('/recoverSMS', { state: { formLoginValue: formLoginValue } }), 5000);
                }
             }).catch((error) => {
                setLoading(false);
@@ -268,9 +292,6 @@ const FormEmail = () => {
 
    /** Metodo que direcciona a la pantalla de recuperacion contraseña */
    const redirectPassword = () => {
-      // if (!Username) return;
-      //setUserLogin(Username);
-      // navigate('/recoverSMS');
       setModalConfirmacionGuardar(true);
    }
 
@@ -289,7 +310,7 @@ const FormEmail = () => {
                         setIsAlertValide(true);
                         setMessage({
                            isShow: true,
-                           text: 'Su contraseña ha sido cambiado correctamente',
+                           text: 'La contraseña ha sido cambiada correctamente',
                            type: 'success',
                         });
                         setIsAlertValide(true);
@@ -312,7 +333,12 @@ const FormEmail = () => {
                setIsAlertValide(true);
             }
          } else {
-            throw new Error('Por favor. Ingrese la contraseña.');
+            setMessage({
+               isShow: true,
+               text: "Ingresa la contraseña",
+               type: 'error',
+            });
+            setIsAlertValide(true);
          }
       } catch (error) {
          setMessage({
@@ -322,6 +348,66 @@ const FormEmail = () => {
          });
          setIsAlertValide(true);
       }
+   }
+
+   /**Metodo de regresar pantalla login */
+   const toBack = () => {
+      setIsAlertValide(false)
+      setIsCorrectMail(true);
+      setFormLoginValue({
+         Username: formLoginValue.Username,
+         Password: '******',
+      });
+   }
+
+   const handleSuccessCloudflare = (cloudflareToken) => {
+      setCloudflareToken(cloudflareToken);
+
+      if (message?.text?.includes("Cloudflare Error")) {
+         setIsAlertValide(false);
+      }
+   }
+
+   const handleErrorCloudflare = (errorCode) => {
+      setCloudflareToken(null); // <-- Bloquea los botones de nuevo si hay error
+      const code = String(errorCode);
+      var errorMsj = ""
+      switch (code) {
+         case '110100':
+            errorMsj = "Cloudflare Error de configuración: La Site Key no es válida.";
+            break;
+         case '110200':
+            errorMsj = "Cloudflare Error de dominio: Tu IP o Hostname no están autorizados.";
+            break;
+         case '110600':
+            errorMsj = "Cloudflare Error Acceso denegado: El navegador no es compatible o parece automatizado.";
+            break;
+         case '300030':
+            errorMsj = "Cloudflare Error de conexión: No se pudo contactar con los servidores de Cloudflare.";
+            break;
+         case '600010':
+            errorMsj = "Cloudflare Error en el widget: Por favor, intenta recargar la página.";
+            break;
+         default:
+            errorMsj = `Cloudflare Error de seguridad inesperado (Código: ${code})`;
+            break;
+      }
+      setMessage({
+         isShow: true,
+         text: errorMsj,
+         type: 'error',
+      });
+      setIsAlertValide(true);
+   }
+
+   const handleExpireCloudflare = () => {
+      setCloudflareToken(null); // Bloquea los botones de nuevo si hay error
+      setMessage({
+         isShow: true,
+         text: "La validación de Cloudflare ha expirado.",
+         type: 'error',
+      });
+      setIsAlertValide(true);
    }
 
    const handleKeyDetect = (event) => {
@@ -391,37 +477,38 @@ const FormEmail = () => {
    return (
       <>
          {loading && <Loading show={loading} />}
-         {modalConfirmacionGuardar && <ModalConfirmation showModal={modalConfirmacionGuardar} tipoModal={false} message="¿Estás seguro de recuperar la contraseña?" closeModal={handleCloseConfirmacion}></ModalConfirmation>}
-         <BasicLayout illustration={login}>
+         {modalConfirmacionGuardar && <ModalEnviar showModal={modalConfirmacionGuardar} tipoModal={false} message="Se enviará un PIN vía SMS al celular registrado" closeModal={handleCloseConfirmacion}></ModalEnviar>}
+         <PageLayout>
             <MDBox
-               px={2} // Espacio de seguridad a los lados en el celular
+               px={2}
                width="100%"
                display="flex"
                justifyContent="center"
                alignItems="center"
-               minHeight="100vh"
+               py={isMobile ? 2 : 5}
             >
                <Card sx={{
-                  // En móvil 90% para que respire, en PC 450px para que no se estire
-                  width: isMobile ? "90%" : "450px",
-                  padding: isMobile ? "25px" : "40px",
+                  width: isMobile ? "450px" : "450px",
+                  padding: isMobile ? "15px" : "40px",
                   borderRadius: "1.5rem",
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
                   margin: "auto",
-                  // Esto evita que la card se haga diminuta si el contenido es poco
-                  minWidth: isMobile ? "280px" : "400px"
+                  minWidth: isMobile ? "280px" : "400px",
+                  overflow: "hidden"
                }}>
                   <MDBox display="flex" flexDirection="column">
 
-                     {/* Logo Centrado */}
                      <MDBox sx={{
                         width: "100%",
                         display: "flex",
                         justifyContent: "center",
-                        mb: 4
+                        mb: 1
                      }}>
-                        <MDBox sx={{ width: isMobile ? "180px" : "220px" }}>
-                           <LogoInovag />
+                        <MDBox sx={{
+                           width: "100%",
+                           maxWidth: isMobile ? "160px" : "220px",
+                           margin: "0 auto"
+                        }}>
+                           <LogoEasy />
                         </MDBox>
                      </MDBox>
 
@@ -436,39 +523,48 @@ const FormEmail = () => {
                         </MDTypography>
                      </MDBox>
 
-                     <MDBox mb={4} sx={{ textAlign: "center" }}>
-                        <MDTypography variant="button" fontWeight="regular" color="text">
-                           Ingresa tu correo para iniciar sesión
-                        </MDTypography>
-                     </MDBox>
-
-                     {isAlertValide && (
-                        <MDBox mb={3}>
-                           <MDAlert color={message.type}>{message.text}</MDAlert>
-                        </MDBox>
-                     )}
-
                      {isCorrectMail ? (
-                        /* --- PASO 1: CORREO --- */
                         <MDBox width="100%">
                            <MDBox mb={2}>
                               <MDInput
                                  onKeyUp={handleKeyDetect}
                                  type="email"
                                  name="Username"
-                                 label="Correo Electrónico"
+                                 label="Ingresa Correo Electrónico"
                                  fullWidth
                                  value={Username}
                                  onChange={handleChange}
                               />
                            </MDBox>
-                           <MDBox mt={4} mb={1}>
+
+                           {isAlertValide && (
+                              <MDBox mt={1}>
+                                 <MDAlert
+                                    color={message.type === "error" ? "error" : message.type}>
+                                    <MDTypography
+                                       variant="caption"
+                                       color="white"
+                                       display="flex"
+                                       alignItems="center"
+                                       justifyContent="center"
+                                       width="100%"
+                                    >
+                                       <Error fontSize="small" />
+                                       &nbsp;
+                                       {message.text}
+                                    </MDTypography>
+                                 </MDAlert>
+                              </MDBox>
+                           )}
+
+                           <MDBox mt={2} mb={1}>
                               <MDButton
                                  variant="gradient"
                                  sx={{ backgroundColor: "#ff5f00 !important", height: "50px" }}
                                  size="large"
                                  fullWidth
                                  onClick={validateEmailClick}
+                                 disabled={!cloudflareToken} //CONGELA EL BOTÓN SI NO HAY TOKEN
                               >
                                  <MDTypography variant="h7" color="white" fontWeight="bold">INICIAR SESIÓN</MDTypography>
                               </MDButton>
@@ -480,10 +576,46 @@ const FormEmail = () => {
                                  sx={{ height: "50px" }}
                                  size="large"
                                  fullWidth
-                                 onClick={() => navigate('/registration')}
+                                 onClick={validateRegistrarClick}
+                                 disabled={!cloudflareToken} //CONGELA EL BOTÓN SI NO HAY TOKEN
                               >
                                  <MDTypography variant="h7" color="dark" fontWeight="bold">REGISTRARSE</MDTypography>
                               </MDButton>
+                           </MDBox>
+
+                           <MDBox
+                              width="100%"
+                              mt={2}
+                              pb={3}
+                              display="flex"
+                              justifyContent="center"
+                              sx={{
+                                 overflow: "hidden",
+                                 "& > div": {
+                                    width: "100% !important",
+                                    minWidth: "100% !important",
+                                    display: "flex !important",
+                                    justifyContent: "center !important",
+                                    transform: isMobile ? "scale(0.92)" : "scale(1)",
+                                    transformOrigin: "center center",
+                                 },
+                                 "& iframe": {
+                                    margin: "0 auto !important",
+                                    display: "block !important",
+                                 }
+                              }}
+                           >
+                              <Turnstile
+                                 siteKey={global.Constants.cloudflare}
+                                 onSuccess={handleSuccessCloudflare}
+                                 onError={handleErrorCloudflare}
+                                 onExpire={handleExpireCloudflare}
+                                 options={{
+                                    theme: 'auto',
+                                    size: 'flexible',
+                                    appearance: 'always',
+                                 }}
+                              />
                            </MDBox>
                         </MDBox>
                      ) : (
@@ -491,9 +623,9 @@ const FormEmail = () => {
                            <Grid container alignItems="center" spacing={1} mb={3}>
                               <Grid item>
                                  <Tooltip placement="top" title="Regresar">
-                                 <IconButton onClick={toBack} sx={{ background: grey[100] }}>
-                                    <ArrowBackIcon />
-                                 </IconButton>
+                                    <IconButton onClick={toBack} sx={{ background: grey[100] }}>
+                                       <ArrowBackIcon />
+                                    </IconButton>
                                  </Tooltip>
                               </Grid>
                               <Grid item xs>
@@ -511,6 +643,29 @@ const FormEmail = () => {
                                  <MDBox mb={2}>
                                     <MDInput onKeyUp={handleKeyDetect} type="password" name="confirmPassword" label="Confirmar Contraseña" fullWidth value={confirmPassword} onChange={handleChangePassword} />
                                  </MDBox>
+
+                                 {isAlertValide && (
+                                    <MDBox mt={1}>
+                                       <MDAlert
+                                          color={message.type === "error" ? "error" : message.type}
+                                       //onClose={clearMessage}
+                                       >
+                                          <MDTypography
+                                             variant="caption"
+                                             color="white"
+                                             display="flex"
+                                             alignItems="center"
+                                             justifyContent="center"
+                                             width="100%"
+                                          >
+                                             <Error fontSize="small" />
+                                             &nbsp;
+                                             {message.text}
+                                          </MDTypography>
+                                       </MDAlert>
+                                    </MDBox>
+                                 )}
+
                                  <MDBox mt={4}>
                                     <MDButton variant="gradient" sx={{ backgroundColor: "#ff5f00 !important", height: "50px" }} size="large" fullWidth onClick={changePassword}>
                                        <MDTypography variant="h7" color="white" fontWeight="bold">CAMBIAR CONTRASEÑA</MDTypography>
@@ -522,6 +677,28 @@ const FormEmail = () => {
                                  <MDBox mb={3}>
                                     <MDInput inputRef={refPass} autoFocus onKeyUp={handleKeyDetect} type="password" name="Password" label="Contraseña" fullWidth value={Password} onChange={handleChange} />
                                  </MDBox>
+                                 {isAlertValide && (
+                                    <MDBox mt={1}>
+                                       <MDAlert
+                                          color={message.type === "error" ? "error" : message.type}
+                                       //onClose={clearMessage}
+                                       >
+                                          <MDTypography
+                                             variant="caption"
+                                             color="white"
+                                             display="flex"
+                                             alignItems="center"
+                                             justifyContent="center"
+                                             width="100%"
+                                          >
+                                             <Error fontSize="small" />
+                                             &nbsp;
+                                             {message.text}
+                                          </MDTypography>
+                                       </MDAlert>
+                                    </MDBox>
+                                 )}
+
                                  <MDButton variant="gradient" sx={{ backgroundColor: "#ff5f00 !important", height: "50px" }} size="large" fullWidth onClick={validatePassword}>
                                     <MDTypography variant="h7" color="white" fontWeight="bold">INICIAR SESIÓN</MDTypography>
                                  </MDButton>
@@ -543,9 +720,10 @@ const FormEmail = () => {
                   </MDBox>
                </Card>
             </MDBox>
-         </BasicLayout>
+            <Footer />
+         </PageLayout>
       </>
    );
 }
 
-export default FormEmail;
+export default View_FormEmail;

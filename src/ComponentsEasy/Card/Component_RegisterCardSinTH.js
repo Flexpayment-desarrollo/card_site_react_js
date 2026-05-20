@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import Loading from "Global/Loading/Loading";
+import MDBox from "components/MDBox";
+import MDAlert from "components/MDAlert";
 import MDButton from "components/MDButton";
 import MDTypography from "components/MDTypography";
 import FormField from "layouts/applications/wizard/components/FormField";
 import { emailValidForm } from "Global/Expressions";
 import { useNavigate } from "react-router-dom";
-import { ArrowBack, Save } from "@mui/icons-material";
+import { ArrowBack, Error, Save } from "@mui/icons-material";
 import { TbCalculator } from "react-icons/tb";
 import { alphanumericValid_ } from "Global/Expressions";
 import { ModalConfirmation } from "Global/ModalConfirmation";
@@ -49,8 +51,9 @@ const Data = {
     IdCP: 0
 }
 
-export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, closeModal }) => {
+export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
     const navigate = useNavigate();
+    const Authentication = JSON.parse(sessionStorage.getItem("Authentication"));
     const Ubicacion = JSON.parse(sessionStorage.getItem("ubicacion"));
     const [formData, setFormData] = useState(Data)
     const [loading, setLoading] = useState(false);
@@ -59,13 +62,17 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
     const [stateList, setStateList] = useState([""]);
     const [cityList, setCityList] = useState([""]);
     const [colonyList, setColonyList] = useState([{ id: 0, label: "" }]);
-    const [dateBirth, setDateBirth] = useState(dayjs(new Date()));
+    const [dateBirth, setDateBirth] = useState(Authentication?.fechaNacimiento ? dayjs(Authentication.fechaNacimiento) : dayjs());
     const [defaultIdCP, setDefaultIdCP] = useState({ id: 0, label: "" });
     const [defaultTipoIdent, setDefaultTipoIdent] = useState({ id: 0, label: "" })
     const [genderType, setGenderType] = useState([]);
     const [defaultGenero, setDefaultGenero] = useState({ id: 0, label: "" });
     const [identificationType, setIdentificationType] = useState([]);
+    const [isAlertValide, setIsAlertValide] = useState(false);
     const [modalConfirmacionGuardar, setModalConfirmacionGuardar] = useState(false);
+    const [message, setMessage] = useState({
+        isShow: false
+    });
     const [errorFlag, setErrorFlag] = useState({
         rfc: false,
         rfcMsg: '',
@@ -102,11 +109,35 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
     });
 
     useEffect(() => {
+        const initialDate = Authentication?.fechaNacimiento || dayjs().format("YYYY-MM-DD");
+        setFormData({
+            ...formData,
+            Nombre: Authentication.nombre || "",
+            SegundoNombre: Authentication.segundoNombre || "",
+            ApellidoPaterno: Authentication.apellidoPaterno || "",
+            ApellidoMaterno: Authentication.apellidoMaterno || "",
+            FechaNacimiento: initialDate,
+            Email: Authentication.email || "",
+            Telefono: Authentication.telefono || "",
+            RFC: Authentication.rfc || "",
+            CardNumber: datos.CardNumber || "",
+            Expires: datos.Expires || ""
+        })
+
         getStateList();
         getGenderList();
         getIdentificationList();
-        setDateBirth(dayjs(new Date()));
-    }, []);
+        setDateBirth(dayjs(initialDate));
+
+        if (isAlertValide && message.isShow) {
+            const timer = setTimeout(() => {
+                setIsAlertValide(false);
+                setMessage((prev) => ({ ...prev, isShow: false }));
+            }, 5000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [isAlertValide, message.isShow]);
 
     /*Método que consulta la lista de estados*/
     async function getStateList() {
@@ -114,10 +145,10 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
             .then((data) => {
                 if (data.code === 0) {
                     setStateList(data.data);
-                    if (action === "edit") {
-                        setStateDic(stateDic)
-                        getCityList(stateDic, true) //true si es porque estamos en edit y es la primera vez
-                    }
+                    // if (action === "edit") {
+                    //     setStateDic(stateDic)
+                    //     getCityList(stateDic, true) //true si es porque estamos en edit y es la primera vez
+                    // }
                 }
                 else {
                     setLoading(false);
@@ -132,12 +163,15 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
                 //     } else {
                 //     }
                 // }
-                setMessage({
-                    text: error.message,
-                    type: "warning",
-                    isShow: true
-                });
-
+                setMessage({ isShow: false });
+                setTimeout(() => {
+                    setMessage({
+                        isShow: true,
+                        text: error.message,
+                        type: "warning"
+                    });
+                    setIsAlertValide(true);
+                }, 50)
             });
     }
 
@@ -148,21 +182,30 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
                 if (data.code === 0) {
                     if (data.data !== null) {
                         setCityList(data.data);
-                        if ((action === "edit") && tipo) {
-                            setCityDic(cityDic)
-                            getColonyList(stateDic, cityDic, tipo)
-                        }
+                        // if ((action === "edit") && tipo) {
+                        //     setCityDic(cityDic)
+                        //     getColonyList(stateDic, cityDic, tipo)
+                        // }
                     }
                     else {
                         setLoading(false);
                     }
                 } else {
                     setLoading(false);
-                    setMessage({
-                        isShow: true,
-                        text: data.businessMeaning,
-                        type: "danger",
-                    });
+                    // setMessage({
+                    //     isShow: true,
+                    //     text: data.businessMeaning,
+                    //     type: "error",
+                    // });
+                    setMessage({ isShow: false });
+                    setTimeout(() => {
+                        setMessage({
+                            isShow: true,
+                            text: data.businessMeaning,
+                            type: "error"
+                        });
+                        setIsAlertValide(true);
+                    }, 50)
                 }
             })
             .catch((error) => {
@@ -174,17 +217,25 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
                 //     } else {
                 //         setMessage({
                 //             text: error.message,
-                //             type: "danger",
+                //             type: "error",
                 //             isShow: true
                 //         });
                 //     }
                 // }
-                setMessage({
-                    text: error.message,
-                    type: "warning",
-                    isShow: true
-                });
-
+                setMessage({ isShow: false });
+                setTimeout(() => {
+                    setMessage({
+                        isShow: true,
+                        text: error.message,
+                        type: "error"
+                    });
+                    setIsAlertValide(true);
+                }, 50)
+                // setMessage({
+                //     text: error.message,
+                //     type: "error",
+                //     isShow: true
+                // });
             });
     }
 
@@ -204,19 +255,28 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
 
                         });
                         setColonyList(rows);
-                        if (action === "edit") {
-                            var coloniaSelecionada = rows.find(element => element.id == formData.IdCP)
-                            setDefaultIdCP(coloniaSelecionada)
-                        }
+                        // if (action === "edit") {
+                        //     var coloniaSelecionada = rows.find(element => element.id == formData.IdCP)
+                        //     setDefaultIdCP(coloniaSelecionada)
+                        // }
                     }
                     setLoading(false);
                 } else {
                     setLoading(false);
-                    setMessage({
-                        isShow: true,
-                        text: data.businessMeaning,
-                        type: "danger",
-                    });
+                    setMessage({ isShow: false });
+                    setTimeout(() => {
+                        setMessage({
+                            isShow: true,
+                            text: data.businessMeaning,
+                            type: "error"
+                        });
+                        setIsAlertValide(true);
+                    }, 50)
+                    // setMessage({
+                    //     isShow: true,
+                    //     text: data.businessMeaning,
+                    //     type: "error",
+                    // });
                 }
             })
             .catch((error) => {
@@ -228,18 +288,25 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
                 //     } else {
                 //         setMessage({
                 //             text: error.message,
-                //             type: "danger",
+                //             type: "error",
                 //             isShow: true
                 //         });
                 //     }
                 // }
-                setMessage({
-                    text: error.message,
-                    type: "warning",
-                    isShow: true
-                });
-
-
+                // setMessage({
+                //     text: error.message,
+                //     type: "error",
+                //     isShow: true
+                // });
+                setMessage({ isShow: false });
+                setTimeout(() => {
+                    setMessage({
+                        isShow: true,
+                        text: error.message,
+                        type: "error"
+                    });
+                    setIsAlertValide(true);
+                }, 50)
             });
     }
 
@@ -272,18 +339,18 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
                 rows.push(jsonData);
             });
             setIdentificationType(rows);
-            if (action === "edit") {
-                var identSeleccionado = rows.find(element => element.id === formData.IdTipoIdentificacion)
-                if (identSeleccionado !== undefined && identSeleccionado !== null)
-                    setDefaultTipoIdent(identSeleccionado)
-                else
-                    setDefaultTipoIdent({ id: 0, label: "" })
-            }
+            // if (action === "edit") {
+            //     var identSeleccionado = rows.find(element => element.id === formData.IdTipoIdentificacion)
+            //     if (identSeleccionado !== undefined && identSeleccionado !== null)
+            //         setDefaultTipoIdent(identSeleccionado)
+            //     else
+            //         setDefaultTipoIdent({ id: 0, label: "" })
+            // }
         }).catch((err) => {
         })
     }
 
-    /*Método que asigna un tarjetahabiente a una tarjeta*/
+    /*Método que asigna un tarjetahabiente a una tarjeta y crea un tarjetahabiente*/
     const sendForm = async () => {
 
         const [month, year] = formData.Expires.split("/");
@@ -314,38 +381,60 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
         setLoading(true);
         await createCardTH(datos)
             .then((data) => {
-                console.log(data);
                 if (data.code === 0) {
                     setLoading(false);
-                    setMessage({
-                        isShow: true,
-                        text: "Tarjetahabiente creado correctamente",
-                        type: "success",
-                    });
+                    setMessage({ isShow: false });
+                    setTimeout(() => {
+                        setMessage({
+                            isShow: true,
+                            text: "Tarjetahabiente creado correctamente",
+                            type: "success",
+                        });
+                        setIsAlertValide(true);
+                    }, 50)
                     const Id = data.businessMeaning;
                     closeDetail(Id);
                 } else {
                     setLoading(false);
-                    setMessage({
-                        isShow: true,
-                        text: data.businessMeaning,
-                        type: "danger",
-                    });
+                    setMessage({ isShow: false });
+                    setTimeout(() => {
+                        setMessage({
+                            isShow: true,
+                            text: data.businessMeaning,
+                            type: "error"
+                        });
+                        setIsAlertValide(true);
+                    }, 50)
+                    // setMessage({
+                    //     isShow: true,
+                    //     text: data.businessMeaning,
+                    //     type: "error",
+                    // });
+                    // setIsAlertValide(true);
                 }
             })
             .catch((error) => {
-                console.log(error);
                 setLoading(false);
                 if (error.response.status === 401) {
                     if (error.response.data.code === 2011) {
                         deleteStorage();
                         navigate("/SignIn");
                     } else {
-                        setMessage({
-                            text: error.message,
-                            type: "danger",
-                            isShow: true,
-                        });
+                        setMessage({ isShow: false });
+                        setTimeout(() => {
+                            setMessage({
+                                isShow: true,
+                                text: error,
+                                type: "error"
+                            });
+                            setIsAlertValide(true);
+                        }, 50)
+                        // setMessage({
+                        //     text: error,
+                        //     type: "error",
+                        //     isShow: true,
+                        // });
+                        // setIsAlertValide(true);
                     }
                 }
             });
@@ -489,25 +578,58 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
             fechaNacimientoMsg: ""
         }
 
-        if ((typeof (Nombre) === 'function' || Nombre === "")) {
+        if ((typeof (formData.Nombre) === 'function' || formData.Nombre === "")) {
             errorTemp.nombre = true
             errorTemp.nombreMsg = "El nombre no puede estar vacío para calcular el RFC."
             valid = false
         }
-        if ((typeof (ApellidoPaterno) === 'function' || ApellidoPaterno === "")) {
+        if ((typeof (formData.ApellidoPaterno) === 'function' || formData.ApellidoPaterno === "")) {
             errorTemp.aPaterno = true
             errorTemp.aPaternoMsg = "El apellido paterno no puede estar vacío para calcular el RFC."
             valid = false
         }
-        if ((typeof (ApellidoMaterno) === 'function' || ApellidoMaterno === "")) {
+        if ((typeof (formData.ApellidoMaterno) === 'function' || formData.ApellidoMaterno === "")) {
             errorTemp.aMaterno = true
             errorTemp.aMaternoMsg = "El apellido materno no puede estar vacío para calcular el RFC."
             valid = false
         }
-        if ((typeof (FechaNacimiento) === 'function' || FechaNacimiento === 'Invalid Date')) {
+        if ((typeof (formData.FechaNacimiento) === 'function' || formData.FechaNacimiento === 'Invalid Date' || formData.FechaNacimiento === '')) {
             errorTemp.fechaNacimiento = true
             errorTemp.fechaNacimientoMsg = "La fecha no es válida para calcular el RFC."
             valid = false
+        }
+        else {
+            /*Validar que la persona sea mayor a 18 años*/
+            let anio = Number(FechaNacimiento.substring(0, 4));
+            let mes = Number(FechaNacimiento.substring(5, 7));
+            let dia = Number(FechaNacimiento.substring(8));
+            let aa = new Date();
+            let cc = aa.getFullYear() - anio
+            if (cc <= 18) {
+                if (cc < 18) {
+                    errorTemp.fechaNacimiento = true
+                    errorTemp.fechaNacimientoMsg = "La persona debe ser mayor a 18 años."
+                    valid = false
+                }
+                else {
+                    let diferenciaMes = mes - aa.getMonth() - 1;
+                    if (diferenciaMes > 0) {
+                        errorTemp.fechaNacimiento = true
+                        errorTemp.fechaNacimientoMsg = "La persona debe ser mayor a 18 años."
+                        valid = false
+                    }
+                    else {
+                        if (diferenciaMes === 0) {
+                            let diferenciaDia = dia - aa.getDate();
+                            if (diferenciaDia > 0) {
+                                errorTemp.fechaNacimiento = true
+                                errorTemp.fechaNacimientoMsg = "La persona debe ser mayor a 18 años."
+                                valid = false
+                            }
+                        }
+                    }
+                }
+            }
         }
         setErrorFlag({
             ...errorFlag,
@@ -544,7 +666,7 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
             } else {
                 setMessage({
                     text: result.businessMeaning,
-                    type: 'danger',
+                    type: 'error',
                     isShow: true
                 });
             }
@@ -557,7 +679,7 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
                 } else {
                     setMessage({
                         text: error.message,
-                        type: 'danger',
+                        type: 'error',
                         isShow: true
                     });
                 }
@@ -569,9 +691,8 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
         let { value } = event.target;
         const { selectionStart } = event.target; // Guardar posición del cursor
 
-        // Obtener el valor anterior para saber si estamos borrando
-        const prevValue = formData.Expires;
-        const isDeleting = prevValue.length > value.length;
+        const prevValue = (formData && formData.Expires) ? formData.Expires : "";
+        const isDeleting = prevValue.length > (value ? value.length : 0);
 
         // Si el usuario intentó borrar la diagonal directamente, borramos el número anterior también
         if (isDeleting && prevValue.endsWith('/') && value.length === 2) {
@@ -645,17 +766,17 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
             expiresMsg: "",
         };
 
-        if ((typeof (Nombre) === 'function' || Nombre === "")) {
+        if ((typeof (formData.Nombre) === 'function' || formData.Nombre === "")) {
             errorTemp.nombre = true
             errorTemp.nombreMsg = "El nombre no puede estar vacío"
             valid = false;
         }
-        if ((typeof (ApellidoPaterno) === 'function' || ApellidoPaterno === "")) {
+        if ((typeof (formData.ApellidoPaterno) === 'function' || formData.ApellidoPaterno === "")) {
             errorTemp.aPaterno = true;
             errorTemp.aPaternoMsg = "El apellido paterno no puede estar vacío"
             valid = false;
         }
-        if ((typeof (ApellidoMaterno) === 'function' || ApellidoMaterno === "")) {
+        if ((typeof (formData.ApellidoMaterno) === 'function' || formData.ApellidoMaterno === "")) {
             errorTemp.aMaterno = true;
             errorTemp.aMaternoMsg = "El apellido materno no puede estar vacío"
             valid = false;
@@ -708,12 +829,12 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
             errorTemp.curpMsg = "La longitud debe ser de 18 caracteres"
             valid = false;;
         }
-        if ((typeof (RFC) === "function" || RFC === "")) {
+        if ((typeof (formData.RFC) === "function" || formData.RFC === "" || formData.RFC === null)) {
             errorTemp.rfc = true;
             errorTemp.rfcMsg = "El RFC no puede estar vacío";
             valid = false;
         } else {
-            if (RFC.length !== 13) {
+            if (formData.RFC.length !== 13) {
                 errorTemp.rfc = true;
                 errorTemp.rfcMsg = "La longitud debe ser de 13 caracteres"
                 valid = false;
@@ -749,7 +870,7 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
             errorTemp.telMsg = "La longitud debe ser de 10 caracteres"
             valid = false;
         }
-        if (typeof (Email) === 'function' || Email === "" || !emailValidForm(Email.trim())) {
+        if (typeof (formData.Email) === 'function' || formData.Email === "" || !emailValidForm(formData.Email.trim())) {
             errorTemp.email = true;
             errorTemp.emailMsg = "Email no valido"
             valid = false;
@@ -764,22 +885,22 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
             errorTemp.noIdentMsg = "Número de identificación no puede estar vacío"
             valid = false;
         }
-        if (typeof (CardNumber) === 'function' || CardNumber === "") {
+        if (typeof (formData.CardNumber) === 'function' || formData.CardNumber === "") {
             errorTemp.numTarjeta = true;
             errorTemp.numTarjetaMsg = "El número de tarjeta no puede estar vacío"
             valid = false;
         }
-        else if (CardNumber.length !== 16) {
+        else if (formData.CardNumber.length !== 16) {
             errorTemp.numTarjeta = true;
             errorTemp.numTarjetaMsg = "La longitud debe ser de 16 caracteres"
             valid = false;
         }
-        if (typeof (Expires) === 'function' || Expires === "") {
+        if (typeof (formData.Expires) === 'function' || formData.Expires === "") {
             errorTemp.expires = true;
             errorTemp.expiresMsg = "La fecha de expiración no puede estar vacía"
             valid = false;
         }
-        else if (Expires.length < 5) {
+        else if (formData.Expires.length < 5) {
             errorTemp.expires = true;
             errorTemp.expiresMsg = "Formato requerido: MM/AA";
             valid = false;
@@ -787,6 +908,16 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
         setErrorFlag(errorTemp)
         return valid
     }
+
+    /** Metodo que limpia los mensajes */
+    const clearMessage = () => {
+        setIsAlertValide(false);
+        setMessage({
+            isShow: false,
+            text: "",
+            type: ""
+        });
+    };
 
     const {
         Telefono,
@@ -812,6 +943,15 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
     return (
         <>
             {loading && <Loading show={loading} />}
+            {/* {message.isShow && (
+                            <Alert
+                                alert={message.type}
+                                message={message.text}
+                                onClose={clearMessage}
+                                open={message.isShow}
+                            />
+                        )} */}
+
             {modalConfirmacionGuardar && (
                 <ModalConfirmation
                     showModal={modalConfirmacionGuardar}
@@ -825,7 +965,7 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
                     <Grid container alignItems="center" mb={3}>
                         <Grid item>
                             <Tooltip placement="top" title="Regresar">
-                                <IconButton onClick={closeModal} sx={{ background: '#ebebeb', mr: 2 }}>
+                                <IconButton onClick={() => navigate('/Cards')} sx={{ background: '#ebebeb', mr: 2 }}>
                                     <ArrowBack />
                                 </IconButton>
                             </Tooltip>
@@ -837,7 +977,6 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
 
                     <Card id="basic-info" sx={{ overflow: "visible" }}>
                         <Grid container p={3} spacing={3}>
-
                             <Grid item xs={6} sm={6} md={3}>
                                 <FormField
                                     error={errorFlag.numTarjeta}
@@ -942,7 +1081,7 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
                                     name="RFC"
                                     label="RFC"
                                     fullWidth
-                                    value={formData.RFC}
+                                    value={RFC}
                                     onChange={handleChangeAlphanumeric}
                                     required
                                     inputProps={{ maxLength: 13 }}
@@ -1088,17 +1227,46 @@ export const Component_RegistrarSinTh = ({ action, setMessage, closeDetail, clos
                             </Grid>
                         </Grid>
 
+                        {isAlertValide && (
+                            <MDBox mt={1} pl={2} pr={2}>
+                                <MDAlert
+                                    color={
+                                        message.type === "error" ? "error" : message.type
+                                    }
+                                    onClose={clearMessage}
+                                >
+                                    <MDTypography
+                                        variant="caption"
+                                        color="white"
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        width="100%"
+                                    >
+                                        <Error fontSize="small" />
+                                        &nbsp;
+                                        {message.text}
+                                    </MDTypography>
+                                </MDAlert>
+                            </MDBox>
+                        )}
                         <Grid container justifyContent="flex-end" p={3}>
                             <Grid item xs={12} sm="auto">
                                 <MDButton
                                     type="button"
+                                    size="small"
                                     variant="gradient"
                                     color="info"
                                     fullWidth
                                     onClick={confirmar}
                                     sx={{ px: 4 }}
                                 >
-                                    <Save sx={{ mr: 1 }} /> Guardar
+                                    <Save sx={{
+                                        width: "20px",
+                                        height: "20px",
+                                        color: "white !important",
+                                    }} />&nbsp;
+                                    Guardar
                                 </MDButton>
                             </Grid>
                         </Grid>

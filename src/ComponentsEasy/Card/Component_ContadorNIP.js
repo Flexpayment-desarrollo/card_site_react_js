@@ -3,7 +3,7 @@ import MDTypography from "components/MDTypography";
 import MDButton from "components/MDButton";
 import MDBox from "components/MDBox";
 
-const Component_ContadorNIP = ({ segundosIniciales = 60, alTerminar }) => {
+const Component_ContadorNIP = ({ segundosIniciales = 30, alTerminar }) => {
   const [segundos, setSegundos] = useState(segundosIniciales);
   const [activo, setActivo] = useState(true);
 
@@ -17,7 +17,7 @@ const Component_ContadorNIP = ({ segundosIniciales = 60, alTerminar }) => {
     } else if (segundos === 0) {
       setActivo(false);
       clearInterval(intervalo);
-      if (alTerminar) alTerminar(); // Ejecuta una función cuando llegue a 0
+      if (alTerminar) alTerminar();
     }
 
     return () => clearInterval(intervalo);
@@ -33,8 +33,7 @@ const Component_ContadorNIP = ({ segundosIniciales = 60, alTerminar }) => {
   const reenviarCodigo = () => {
     setSegundos(segundosIniciales);
     setActivo(true);
-    // Aquí llamarías a tu servicio de API para reenviar el NIP
-    // console.log("NIP reenviado...");
+    // Servicio de API para reenviar el NIP
   };
 
   return (

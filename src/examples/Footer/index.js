@@ -93,9 +93,9 @@ function Footer({ company, links }) {
 
 // Setting default values for the props of Footer
 Footer.defaultProps = {
-  company: { href: "https://www.easytransfer.mx", name: "Easy Transfer" },
+  company: { href: "https://www.easytransfer.mx", name: "EasyCard" },
   links: [
-    { href: "https://www.easytransfer.mx", name: "Easy Transfer" },
+    { href: "https://www.easytransfer.mx", name: "EasyCard" },
     { href: "https://www.easytransfer.mx/", name: "Acerca de nosotros" },
     { href: "https://www.easytransfer.mx/contacto", name: "Contacto" },
     { href: "https://www.easytransfer.mx/faq", name: "Preguntas frecuentes" },

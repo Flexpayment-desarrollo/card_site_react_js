@@ -9,10 +9,10 @@ export const emailValid = (email) => {
    const reg = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
    if (isNaN(email.trim())) {
       if (!email.match(reg)) {
-         throw new Error('¡Correo no válido!. Intentelo de nuevo.');
+         throw new Error('¡Correo no válido!. Intentalo de nuevo');
       }
    } else {
-      throw new Error('Por favor. Ingrese el correo electrónico.');
+      throw new Error('Ingresa el correo electrónico');
    }
    return true;
 }
@@ -40,16 +40,16 @@ export const pinValid = (pin) => {
    if (pin.length !== 0) {
       if (pin.length === 6) {
          if (!pin.match(reg)) {
-            throw new Error('Solo se permiten números.');
+            throw new Error('Solo se permiten números');
          }
       } else if (pin.length < 6) {
-         throw new Error('PIN incorrecto. Debe tener 6 dígitos.');
+         throw new Error('PIN incorrecto. Debe tener 6 dígitos');
       }
       else {
-         throw new Error('Solo se permiten 6 dígitos.');
+         throw new Error('Solo se permiten 6 dígitos');
       }
    } else {
-      throw new Error('Por favor. Ingrese el PIN.');
+      throw new Error('Ingresa el PIN');
    }
    return true;
 }
@@ -64,16 +64,16 @@ export const codeValid = (code) => {
    if (code.length !== 0) {
       if (code.length === 6) {
          if (!code.match(reg)) {
-            throw new Error('Solo se permiten caracteres alfanúmericos.');
+            throw new Error('Solo se permiten caracteres alfanúmericos');
          }
       } else if (code.length < 6) {
-         throw new Error('Codigo incorrecto. Debe tener 6 caracteres.');
+         throw new Error('PIN incorrecto. Debe tener 6 caracteres');
       }
       else {
-         throw new Error('Solo se permiten 6 caracteres.');
+         throw new Error('Solo se permiten 6 caracteres');
       }
    } else {
-      throw new Error('Por favor. Ingrese el Codigo.');
+      throw new Error('Ingresa el PIN');
    }
    return true;
 }
@@ -94,7 +94,6 @@ export const deleteStorage = () => {
    sessionStorage.removeItem("newToken");
    sessionStorage.removeItem("Authentication");
    sessionStorage.removeItem("Client");
-   sessionStorage.removeItem("UserRH");
    sessionStorage.removeItem("Producto");
    sessionStorage.removeItem("ubicacion");
 }

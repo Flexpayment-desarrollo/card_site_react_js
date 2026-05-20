@@ -1,10 +1,10 @@
 import React from 'react';
 import MDButton from 'components/MDButton';
-import { Cancel, CheckCircle } from '@mui/icons-material';
+import { Cancel, Send } from '@mui/icons-material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 
 /*Componente para mostrar el modal de confirmación*/
-export const ModalConfirmationDoc = ({ showModal, message, closeModal }) => {
+export const ModalEnviar = ({ showModal, message, closeModal }) => {
 
   return (
     <>
@@ -21,7 +21,7 @@ export const ModalConfirmationDoc = ({ showModal, message, closeModal }) => {
                 boxShadow: "none", // elimina el sombreado al hacer hover
               },
             }}>
-            <CheckCircle
+            <Send
               sx={{
                 width: 20,
                 height: 20,
@@ -29,7 +29,8 @@ export const ModalConfirmationDoc = ({ showModal, message, closeModal }) => {
                 pointerEvents: "none",   // 👈 clave para que el botón reciba el click
               }}
             />
-            &nbsp;Si, Subir documentos
+            &nbsp;
+            Enviar PIN
           </MDButton>
           <MDButton
             name="noBtn"
@@ -52,7 +53,7 @@ export const ModalConfirmationDoc = ({ showModal, message, closeModal }) => {
               }}
             />
             &nbsp;
-            NO, TERMINAR
+            CANCELAR
           </MDButton>
         </DialogActions>
       </Dialog>

@@ -1,22 +1,22 @@
 import React from "react";
 import bgImage from "assets/images/illustrations/slide.jpg";
 import IllustrationLayout from "layouts/authentication/components/IllustrationLayout";
-import LogoInovag from "View/LogoInovag";
 import MDBox from "components/MDBox";
 import MDButton from "components/MDButton";
+import LogoEasy from "Global/LogoEasy";
 import { useNavigate } from 'react-router-dom';
 import { AiOutlineClose } from "react-icons/ai";
 
 const BrokenLink = () => {
    const navigate = useNavigate();
-   
+
    return (
       <IllustrationLayout
          illustration={bgImage}
       >
          <div className="container-center" style={{ textAlign: 'center' }}>
             <MDBox mt={3} mb={1}>
-               <LogoInovag />
+               <LogoEasy />
             </MDBox>
             <div className="row col text-center">
                <h2>Lo sentimos, este link ya no está disponible.</h2>
@@ -26,7 +26,7 @@ const BrokenLink = () => {
             </div>
             <MDBox mt={3} mb={1}>
                <MDButton variant="gradient" color="info" size="" fullWidth onClick={() => navigate('/SignIn')}>
-                  Regresar a Easy Transfer
+                  Regresar a EasyCard
                </MDButton>
             </MDBox>
          </div>

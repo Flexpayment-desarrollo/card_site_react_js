@@ -1,5 +1,5 @@
 {
-  "name": "flexpayment-pro-react",
+  "name": "easycard-pro-react",
   "version": "2.2.0",
   "private": true,
   "author": "Creative Tim",
@@ -22,6 +22,7 @@
     "@fullcalendar/interaction": "6.1.6",
     "@fullcalendar/react": "6.1.6",
     "@fullcalendar/timegrid": "6.1.6",
+    "@marsidev/react-turnstile": "^1.5.1",
     "@mui/icons-material": "^5.10.9",
     "@mui/lab": "^5.0.0-alpha.169",
     "@mui/material": "^5.15.14",

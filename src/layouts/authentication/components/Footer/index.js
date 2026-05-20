@@ -118,21 +118,7 @@ function Footer({ light }) {
             color={light ? "white" : "text"}
             fontSize={size.sm}
           >
-            Copyright  &copy; {new Date().getFullYear()}, Easy Transfer
-            <MDBox fontSize={size.md} color={light ? "white" : "dark"} mb={-0.5} mx={0.25}>
-              <Icon color="inherit" fontSize="inherit">
-                favorite
-              </Icon>
-            </MDBox>
-            by
-            <Link href="https://www.easytransfer.mx/" target="_blank">
-              <MDTypography variant="button" fontWeight="medium" color={light ? "white" : "dark"}>
-                &nbsp;Easy Transfer&nbsp;
-              </MDTypography>
-            </Link>
-
-            {/* 3. Contenedor del Sello (Ajustado para que no rompa el diseño) */}
-            <MDBox ml={2} display="flex" alignItems="center">
+            <MDBox display="flex" alignItems="center">
               <div id="siteseal"></div>
             </MDBox>
           </MDBox>
@@ -176,7 +162,7 @@ function Footer({ light }) {
               alignItems: "center",
               justifyContent: "center",
               listStyle: "none",
-              mt: 3,
+              mt: 1,
               mb: 0,
               p: 0,
 
@@ -185,6 +171,22 @@ function Footer({ light }) {
               },
             })}
           >
+            <MDTypography variant="button" fontWeight="medium" color={light ? "white" : "dark"}>
+              Copyright  &copy; {new Date().getFullYear()}
+
+              <Link href="https://www.easytransfer.mx/" target="_blank">
+                <MDTypography variant="button" fontWeight="medium" color={light ? "white" : "dark"}>
+                  &nbsp;EasyCard&nbsp;
+                </MDTypography>
+              </Link>
+            </MDTypography>
+            {/* <MDBox fontSize={size.sm} color={light ? "white" : "dark"} mb={-0.5} mx={0.25}> */}
+            {/* <Icon color="inherit" fontSize="inherit">
+                favorite
+              </Icon> */}
+            {/* </MDBox> */}
+            {/* by */}
+
             <MDBox component="li" pr={2} lineHeight={1}>
               <Link href="https://www.easytransfer.mx/" target="_blank">
                 <MDTypography
@@ -192,12 +194,23 @@ function Footer({ light }) {
                   fontWeight="regular"
                   color={light ? "white" : "dark"}
                 >
-                  Easy Transfer
+                  www.easytransfer.mx
                 </MDTypography>
               </Link>
             </MDBox>
-            <MDBox component="li" px={2} lineHeight={1}>
+            {/* <MDBox component="li" pr={2} lineHeight={1}>
               <Link href="https://www.easytransfer.mx/" target="_blank">
+                <MDTypography
+                  variant="button"
+                  fontWeight="regular"
+                  color={light ? "white" : "dark"}
+                >
+                  EasyCard
+                </MDTypography>
+              </Link>
+            </MDBox> */}
+            {/* <MDBox component="li" px={2} lineHeight={1}>
+              <Link href="https://www.easytransfer.mx/#Nosotros" target="_blank">
                 <MDTypography
                   variant="button"
                   fontWeight="regular"
@@ -208,7 +221,7 @@ function Footer({ light }) {
               </Link>
             </MDBox>
             <MDBox component="li" px={2} lineHeight={1}>
-              <Link href="https://www.easytransfer.mx/contacto" target="_blank">
+              <Link href="https://www.easytransfer.mx/#Contacto" target="_blank">
                 <MDTypography
                   variant="button"
                   fontWeight="regular"
@@ -219,7 +232,7 @@ function Footer({ light }) {
               </Link>
             </MDBox>
             <MDBox component="li" pl={2} lineHeight={1}>
-              <Link href="https://www.easytransfer.mx/faq" target="_blank">
+              <Link href="https://www.easytransfer.mx/#Faqs" target="_blank">
                 <MDTypography
                   variant="button"
                   fontWeight="regular"
@@ -228,7 +241,7 @@ function Footer({ light }) {
                   Preguntas frecuentes
                 </MDTypography>
               </Link>
-            </MDBox>
+            </MDBox> */}
           </MDBox>
         </MDBox>
       </Container>
