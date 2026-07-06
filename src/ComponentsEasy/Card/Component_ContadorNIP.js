@@ -40,7 +40,7 @@ const Component_ContadorNIP = ({ segundosIniciales = 30, alTerminar }) => {
     <MDBox textAlign="center" mt={2}>
       {segundos > 0 ? (
         <MDTypography variant="button" color="text" fontWeight="regular">
-          El código expira en:{" "}
+          Visible:{" "}
           <MDTypography variant="button" color="info" fontWeight="bold">
             {formatearTiempo(segundos)}
           </MDTypography>

@@ -44,7 +44,11 @@ export const Component_DisperseWallet = ({ isWallet, id }) => {
             monto: false,
             montoMsg: "",
         });
+    }, [isWallet, id]);
 
+    // EFECTO EXCLUSIVO PARA EL TIMER DE LA ALERTA
+    // Este solo se ejecutará cuando la alerta aparezca o cambie
+    useEffect(() => {
         if (isAlertValide && message.isShow) {
             const timer = setTimeout(() => {
                 setIsAlertValide(false);
@@ -53,7 +57,7 @@ export const Component_DisperseWallet = ({ isWallet, id }) => {
 
             return () => clearTimeout(timer);
         }
-    }, [isWallet, id, isAlertValide, message.isShow]);
+    }, [isAlertValide, message.isShow]);
 
     //Método para hacer una dispersión a monedero
     const dispersarMonedero = async (e) => {

@@ -190,7 +190,7 @@ const View_ValidateCode = () => {
             {/* <BasicLayout illustration={bgImage}> */}
             <PageLayout>
                 <MDBox
-                    px={isMobile ? 1 : 2} 
+                    px={isMobile ? 1 : 2}
                     width="100%"
                     display="flex"
                     justifyContent="center"

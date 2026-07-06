@@ -2,12 +2,13 @@ import Loading from "Global/Loading/Loading";
 import MDBox from "components/MDBox";
 import MDButton from "components/MDButton";
 import MDTypography from "components/MDTypography";
+import MDAlert from "components/MDAlert";
 import FormField from "layouts/applications/wizard/components/FormField";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import { useEffect, useState } from "react";
 import { pink } from "@mui/material/colors";
-import { ArrowBack, Error, Send } from "@mui/icons-material";
+import { ArrowBack, DeleteForever, Error, Send } from "@mui/icons-material";
 import {
   Autocomplete,
   Card,
@@ -22,18 +23,16 @@ import { deleteStorage } from "Global/Expressions";
 import { alphanumericSpaceValid } from "Global/Expressions";
 import { numericValid } from "Global/Expressions";
 import { getBanks } from "Services/Card/Service_Card";
-import MDAlert from "components/MDAlert";
+import { getUserAccount } from "Services/Card/Service_Transfer";
+import { ModalConfirmation } from "Global/ModalConfirmation";
 
 const Externa = {
   Cantidad: "",
   IdCuenta: 0,
-  trackingKey: "",
   concepto: "",
   referencia: "",
   GuardaCuenta: false,
   CuentaBanco: null,
-  Pin: "",
-  IdProducto: 0,
   Latitud: 0,
   Longitud: 0,
 };
@@ -49,57 +48,15 @@ const CuentaBanco = {
   IdBanco: 0,
   IdTipoCuentaBancaria: 0,
   Valor: "",
-  RfcCurp: "",
 };
 
 const CuentaSelecionada = {
   alias: "",
   beneficiario: "",
-  rfcCurp: "",
   banco: "",
   tipoCuenta: "",
   valor: "",
 };
-
-const cuentaClienteLista = [
-  { id: 0, label: "Agregar cuenta" },
-  {
-    id: 1,
-    label: "Nómina Santander - Juan Pérez",
-    alias: "Mi Nómina",
-    beneficiario: "Juan Pérez Gómez",
-    rfcCurp: "PEGA900101H12",
-    idBanco: "014",
-    banco: "SANTANDER",
-    idTipoCuentaBancaria: "01",
-    tipoCuenta: "CLABE",
-    valor: "014180655012345678",
-  },
-  {
-    id: 2,
-    label: "Ahorros Banamex - María López",
-    alias: "Ahorros Mamá",
-    beneficiario: "María López Sosa",
-    rfcCurp: "LOSM850505M34",
-    idBanco: "002",
-    banco: "BANAMEX",
-    idTipoCuentaBancaria: "40",
-    tipoCuenta: "Tarjeta de Débito",
-    valor: "5204123456789012",
-  },
-  {
-    id: 3,
-    label: "Inversión BBVA - Carlos Ruiz",
-    alias: "Empresa",
-    beneficiario: "Carlos Ruiz Esparza",
-    rfcCurp: "RUEC781120T45",
-    idBanco: "012",
-    banco: "BBVA BANCOMER",
-    idTipoCuentaBancaria: "01",
-    tipoCuenta: "CLABE",
-    valor: "012180001234567890",
-  },
-];
 
 const genericAutocomplete = [{ label: "", id: 0 }];
 
@@ -108,16 +65,17 @@ export const View_Transferir = () => {
   const location = useLocation();
   const id = location.state?.id;
   const datos = location.state?.datos;
-  let pin = "000000";
+  const tarjeta = location.state?.tarjeta;
   const [loading, setLoading] = useState(false);
   const [isAlertValide, setIsAlertValide] = useState(false);
   const [agregarDisabled, setAgregarDisabled] = useState(true);
   const [banksList, setBanksList] = useState(genericAutocomplete);
-  const [accountList, setAccountList] = useState(cuentaClienteLista);
-  const [accountClientList, setAccountClientList] =
-    useState(cuentaClienteLista);
+  const [accountList, setAccountList] = useState(genericAutocomplete);
+  const [accountClientList, setAccountClientList] = useState([]);
   const [clientAccount, setClientAccount] = useState(CuentaBanco);
   const [transferencia, setTransferencia] = useState(Externa);
+  const [modalConfirmacionEliminar, setModalConfirmacionEliminar] =
+    useState(false);
   const [defaultAccount, setDefaultAccount] = useState(genericAutocomplete[0]);
   const [showAgregarCuenta, setshowAgregarCuenta] = useState(true);
   const [showCuentaSeleccionada, setShowCuentaSeleccionada] = useState(false);
@@ -154,50 +112,112 @@ export const View_Transferir = () => {
     valorMsg: "",
   });
 
-   useEffect(() => {
+  // useEffect(() => {
+  //   getCuentas();
+  // }, []);
+
+  useEffect(() => {
+    const inicializarDatos = async () => {
+      setLoading(true);
+      await getCuentas();
+
+      if (location.state?.isEditing) {
+        const stateData = location.state;
+
+        if (stateData.datosTransferencia) {
+          setTransferencia(stateData.datosTransferencia);
+        }
+
+        if (stateData.totalesExterna) {
+          setTotalesExterna(stateData.totalesExterna);
+        }
+
+        const idCuentaGuardada = stateData.datosTransferencia?.IdCuenta;
+
+        // CUENTA PREVIAMENTE REGISTRADA
+        if (idCuentaGuardada && idCuentaGuardada !== 0) {
+          if (stateData.beneficiario) {
+            setCuentaSeleccionada(stateData.beneficiario);
+            setDefaultAccount({
+              id: idCuentaGuardada,
+              label: `${stateData.beneficiario.alias} - ${stateData.beneficiario.banco.split(" - ")[1] || ""} - ${stateData.beneficiario.valor}`,
+            });
+            setshowAgregarCuenta(false);
+            setShowCuentaSeleccionada(true);
+            setAgregarDisabled(true);
+          }
+        }
+        // AGREGAR CUENTA
+        else {
+          setDefaultAccount({ id: 0, label: "Agregar cuenta" });
+          setshowAgregarCuenta(true);
+          setShowCuentaSeleccionada(false);
+          setAgregarDisabled(false);
+
+          if (stateData.clientAccount) {
+            setClientAccount(stateData.clientAccount);
+          }
+
+          if (
+            stateData.clientAccount?.IdBanco &&
+            stateData.beneficiario?.banco
+          ) {
+            setDefaultBancos({
+              id: stateData.clientAccount.IdBanco,
+              label: stateData.beneficiario.banco,
+            });
+          }
+
+          if (stateData.clientAccount?.IdTipoCuentaBancaria) {
+            const tipo = tipoCuentaList.find(
+              (t) => t.id === stateData.clientAccount.IdTipoCuentaBancaria,
+            );
+            if (tipo) setDefaultTipoCuenta(tipo);
+          }
+        }
+      }
+      setLoading(false);
+    };
+    inicializarDatos();
+  }, [location.state]);
+
+  // EFECTO EXCLUSIVO PARA EL TIMER DE LA ALERTA
+  // Este solo se ejecutará cuando la alerta aparezca o cambie
+  useEffect(() => {
     if (isAlertValide && message.isShow) {
       const timer = setTimeout(() => {
         setIsAlertValide(false);
         setMessage((prev) => ({ ...prev, isShow: false }));
       }, 5000);
-
       return () => clearTimeout(timer);
     }
-
-        // getCuentas();
-    getBancos();
   }, [isAlertValide, message.isShow]);
 
   /*Método que obtiene la lista de cuentas*/
-  async function getCuentas(changed, newClient) {
-    // if (Client !== null || changed === true) {
-    //   let id = null;
-    //   if (changed === true) id = newClient.id;
-    //   else id = Client.id;
+  async function getCuentas() {
     try {
-      //getBancos();
-      // await getClientsAccount(id, Producto.idProducto).then((data) => {
-      //   var rows = [{ id: 0, label: "Agregar cuenta" }];
-      //   if (data.code === 0) {
-      //     data.data.forEach((data) => {
-      //       let jsonData = {
-      //         id: data.id,
-      //         label: data.alias + " - " + data.banco + " - " + data.valor,
-      //       };
-      //       rows.push(jsonData);
-      //     });
-      //     setAccountList(rows);
-      //     setAccountClientList(data.data);
-      //     getBancos();
-      //   } else {
-      //     setLoading(false);
-      //     setMessage({
-      //       isShow: true,
-      //       text: data.businessMeaning,
-      //       type: "danger",
-      //     });
-      //   }
-      // });
+      await getUserAccount().then((data) => {
+        var rows = [{ id: 0, label: "Agregar cuenta" }];
+        if (data.code === 0) {
+          data.data.forEach((data) => {
+            let jsonData = {
+              id: data.id,
+              label: data.alias + " - " + data.banco + " - " + data.valor,
+            };
+            rows.push(jsonData);
+          });
+          setAccountList(rows);
+          setAccountClientList(data.data);
+          getBancos();
+        } else {
+          setLoading(false);
+          setMessage({
+            isShow: true,
+            text: data.businessMeaning,
+            type: "danger",
+          });
+        }
+      });
     } catch (error) {
       setLoading(false);
       if (error.response.status === 401) {
@@ -205,10 +225,9 @@ export const View_Transferir = () => {
           deleteStorage();
           navigate("/SignIn");
         } else {
-          setIsAlertValide(true);
           setMessage({
             text: error.message,
-            type: "error",
+            type: "danger",
             isShow: true,
           });
         }
@@ -249,18 +268,90 @@ export const View_Transferir = () => {
       });
   }
 
+  const eliminarCuenta = async (e) => {
+    // await deleteAccountBank(transferencia.IdCuenta)
+    //   .then((data) => {
+    //     setLoading(false);
+    //     if (data.code === 0) {
+    //       refresh();
+    //     } else {
+    //       setMessage({
+    //         isShow: true,
+    //         text: data.businessMeaning,
+    //         type: "danger",
+    //       });
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     setLoading(false);
+    //     if (error.response.status === 401) {
+    //       if (error.response.data.code === 2011) {
+    //         deleteStorage();
+    //         navigate("/SignIn");
+    //       } else {
+    //         setMessage({
+    //           text: error.message,
+    //           type: "danger",
+    //           isShow: true,
+    //         });
+    //       }
+    //     }
+    //   });
+  };
+
+  // Método para calcular el monto total con comisiones
+  const calculateMontoExterno = (cantidadE) => {
+    const comision = parseFloat((datos?.comisionSpeiOut || 0).toFixed(2));
+    // const comision = parseFloat(0.01.toFixed(2));
+    const total = parseFloat(cantidadE || 0) + parseFloat(comision);
+    setTotalesExterna({
+      ...totalesExterna,
+      total: total,
+    });
+  };
+
+  const confirmEliminarCuenta = () => {
+    setModalConfirmacionEliminar(true);
+  };
+
   /**Método para abrir el modal de confirmación*/
   const confirmarExterno = (e) => {
     e.preventDefault();
     let validation = validateFormExterno();
+
     if (validation) {
+      let infoBeneficiario = cuentaSeleccionada;
+
+      // Si es agregar cuenta nueva, se arma el objeto con lo que se escribió en los inputs manuales
+      if (transferencia.IdCuenta === 0) {
+        infoBeneficiario = {
+          alias: clientAccount.Alias,
+          beneficiario: clientAccount.Beneficiario,
+          banco: defaultBancos?.label || "",
+          tipoCuenta: defaultTipoCuenta?.label || "",
+          valor: clientAccount.Valor,
+        };
+      }
+      // navigate("/Preview", {
+      //   state: {
+      //     datosTransferencia: transferencia,
+      //     beneficiario: infoBeneficiario,
+      //     id: id,
+      //     clientAccount: clientAccount,
+      //     totalesExterna: totalesExterna,
+      //   },
+      // });
+
       navigate("/Preview", {
         state: {
           datosTransferencia: transferencia,
-          beneficiario: cuentaSeleccionada,
+          beneficiario: infoBeneficiario,
           datos: datos,
           id: id,
           clientAccount: clientAccount,
+          totalesExterna: totalesExterna,
+          cuentaSeleccionada: cuentaSeleccionada,
+          tarjeta: tarjeta,
         },
       });
     }
@@ -282,7 +373,7 @@ export const View_Transferir = () => {
           Cantidad: value,
         });
         var valueNoPoint = parseInt(value.substr(0, value.length - 1));
-        //calculateMontoExterno(valueNoPoint);
+        calculateMontoExterno(valueNoPoint);
       } else {
         if (value.includes(".")) {
           // 123.456
@@ -300,13 +391,13 @@ export const View_Transferir = () => {
                 ...transferencia,
                 Cantidad: value, //10.0 -> 10
               });
-              //calculateMontoExterno(value);
+              calculateMontoExterno(value);
             } else {
               setTransferencia({
                 ...transferencia,
                 Cantidad: value,
               });
-              //calculateMontoExterno(value);
+              calculateMontoExterno(value);
             }
           }
         } else {
@@ -318,13 +409,13 @@ export const View_Transferir = () => {
               ...transferencia,
               Cantidad: parseFloat(value),
             });
-            // calculateMontoExterno(value);
+            calculateMontoExterno(value);
           } else {
             setTransferencia({
               ...transferencia,
               Cantidad: value,
             });
-            // calculateMontoExterno(0);
+            calculateMontoExterno(0);
           }
         }
       }
@@ -357,6 +448,29 @@ export const View_Transferir = () => {
   };
 
   const handleChangeSelect = (event, newValue) => {
+    // Si el usuario borró el valor
+    if (!newValue) {
+      // Buscamos cuál input se borró usando el ID del contenedor del evento o el target
+      const targetId = event.currentTarget.querySelector("input")?.id || "";
+      const name = targetId.split("-")[0];
+
+      if (name === "IdCuenta") {
+        setDefaultAccount(genericAutocomplete[0]);
+        setTransferencia({ ...transferencia, IdCuenta: 0 });
+        setAgregarDisabled(false);
+        setshowAgregarCuenta(true);
+        setShowCuentaSeleccionada(false);
+      } else if (name === "IdBanco") {
+        setDefaultBancos(genericAutocomplete[0]);
+        setClientAccount({ ...clientAccount, IdBanco: 0 });
+      } else if (name === "IdTipoCuentaBancaria") {
+        setDefaultTipoCuenta(genericAutocomplete[0]);
+        setClientAccount({ ...clientAccount, IdTipoCuentaBancaria: 0 });
+      }
+      return;
+    }
+
+    //Proceso normal
     let name = event.target.id.split("-")[0];
     if (name === "") return;
 
@@ -380,7 +494,6 @@ export const View_Transferir = () => {
               setCuentaSeleccionada({
                 alias: obj.alias,
                 beneficiario: obj.beneficiario,
-                rfcCurp: obj.rfcCurp,
                 banco: obj.idBanco + " - " + obj.banco,
                 tipoCuenta: obj.idTipoCuentaBancaria + " - " + obj.tipoCuenta,
                 valor: obj.valor,
@@ -457,7 +570,16 @@ export const View_Transferir = () => {
     }
   };
 
-  // /*Método que valida el formulario*/
+  /*Método para cerrar el modal pero antes confirmar si lo quiere cerrar o no*/
+  const handleCloseConfirmarGuardar = (e) => {
+    setModalConfirmacionEliminar(false);
+    if (e.target.name === "yesBtn") {
+      setLoading(true);
+      eliminarCuenta();
+    }
+  };
+
+  /*Método que valida el formulario*/
   const validateFormExterno = () => {
     let valid = true;
     let errorTemp = {
@@ -600,27 +722,19 @@ export const View_Transferir = () => {
     return valid;
   };
 
-  /** Metodo que limpia los mensajes */
-  const clearMessage = () => {
-    setMessage({
-      isShow: false,
-    });
-  };
-
   const { referencia, concepto, GuardaCuenta } = transferencia;
   const { Alias, Beneficiario, IdBanco, Valor } = clientAccount;
 
   return (
     <>
       {loading && <Loading show={loading} />}
-      {/* {message.isShow && (
-        <Alert
-          alert={message.type}
-          message={message.text}
-          onClose={clearMessage}
-          open={message.isShow}
-        />
-      )} */}
+      {modalConfirmacionEliminar && (
+        <ModalConfirmation
+          showModal={modalConfirmacionEliminar}
+          message="¿Estás seguro de eliminar la cuenta?"
+          closeModal={handleCloseConfirmarGuardar}
+        ></ModalConfirmation>
+      )}
       <DashboardLayout>
         <DashboardNavbar />
         <Grid container spacing={3} mb={3}>
@@ -643,6 +757,16 @@ export const View_Transferir = () => {
                   <Grid item xs>
                     <MDTypography variant="h5">TRANSFERIR</MDTypography>
                   </Grid>
+
+                  {/* <Grid item xs textAlign="right">
+                    <MDTypography variant="h6" color="dark" fontWeight="bold">
+                      $
+                      {(tarjeta?.available ?? 0).toLocaleString("es-MX", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </MDTypography>
+                  </Grid> */}
                 </Grid>
 
                 <Grid container spacing={2} p={3}>
@@ -680,7 +804,6 @@ export const View_Transferir = () => {
                           disabled
                         />
                       </Grid>
-
                       <Grid item xs={6} sm={4}>
                         <FormField
                           disabled
@@ -702,7 +825,7 @@ export const View_Transferir = () => {
                           value={cuentaSeleccionada.valor}
                         />
                       </Grid>
-                      {/* <Grid
+                      <Grid
                         item
                         xs={12}
                         sm={12}
@@ -733,7 +856,7 @@ export const View_Transferir = () => {
                             ELIMINAR
                           </MDTypography>
                         </MDButton>
-                      </Grid> */}
+                      </Grid>
                     </>
                   ) : null}
                   {showAgregarCuenta ? (
@@ -878,7 +1001,7 @@ export const View_Transferir = () => {
                     </Grid>
                   </Grid>
                   <Grid item xs={12} sm={3}>
-                    <Grid container spacing={3} pr={1} pl={1}>
+                    <Grid container spacing={1} pr={1} pl={1}>
                       <Grid
                         item
                         xs={12}
@@ -888,15 +1011,67 @@ export const View_Transferir = () => {
                         <MDTypography variant="h6">Totales</MDTypography>
                       </Grid>
                       <Grid item xs={6} sm={6}>
-                        <MDTypography variant="h6">Total:</MDTypography>
+                        <MDTypography
+                          variant="button"
+                          color="text"
+                          fontWeight="regular"
+                        >
+                          Cantidad:
+                        </MDTypography>
                       </Grid>
                       <Grid item xs={6} sm={6} style={{ textAlign: "right" }}>
-                        <MDTypography variant="h6">
-                          ${" "}
+                        {/* <MDTypography variant="h6"> */}
+                        <MDTypography variant="button" fontWeight="bold">
+                          $
                           {transferencia.Cantidad.toLocaleString("es-MX", {
                             maximumFractionDigits: 2,
                             minimumFractionDigits: 2,
                           })}
+                        </MDTypography>
+                      </Grid>
+                      <Grid item xs={6} sm={6}>
+                        <MDTypography
+                          variant="button"
+                          color="text"
+                          fontWeight="regular"
+                        >
+                          Comisión:
+                        </MDTypography>
+                      </Grid>
+                      <Grid item xs={6} sm={6} style={{ textAlign: "right" }}>
+                        {/* <MDTypography variant="h6"> */}
+                        <MDTypography variant="button" fontWeight="bold">
+                          {Number(datos?.comisionSpeiOut || 0).toLocaleString(
+                            "es-MX",
+                            {
+                              maximumFractionDigits: 2,
+                              minimumFractionDigits: 2,
+                            },
+                          )}
+                        </MDTypography>
+                      </Grid>
+                      <Grid item xs={6} sm={6}>
+                        <MDTypography
+                          variant="button"
+                          color="text"
+                          fontWeight="regular"
+                        >
+                          Total:
+                        </MDTypography>
+                      </Grid>
+                      <Grid item xs={6} sm={6} style={{ textAlign: "right" }}>
+                        {/* <MDTypography variant="h6"> */}
+                        <MDTypography variant="button" fontWeight="bold">
+                          ${" "}
+                          {typeof transferencia.Cantidad === "function"
+                            ? "0.00"
+                            : Number(totalesExterna?.total || 0).toLocaleString(
+                                "es-MX",
+                                {
+                                  maximumFractionDigits: 2,
+                                  minimumFractionDigits: 2,
+                                },
+                              )}
                         </MDTypography>
                       </Grid>
                     </Grid>

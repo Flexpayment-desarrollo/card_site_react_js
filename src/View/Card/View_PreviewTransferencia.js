@@ -6,24 +6,27 @@ import MDTypography from "components/MDTypography";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import { useEffect, useState } from "react";
-import {
-    Card,
-    Grid,
-} from "@mui/material";
+import { Card, Grid, IconButton, Tooltip } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ModalGoogleAuth } from "Global/ModalGoogleAuth";
 import { ModalConfirmation } from "Global/ModalConfirmation";
-
+import { deleteStorage } from "Global/Expressions";
+import { TransferToAccountE } from "Services/Card/Service_Transfer";
+import { ModalConfirmationNIP } from "Global/ModalConfirmationNIP";
+import { ArrowBack, CheckCircle, Edit } from "@mui/icons-material";
 
 export const View_PreviewTransferencia = () => {
-    let pin = "000000";
+    const Ubicacion = JSON.parse(sessionStorage.getItem("ubicacion"));
+    let pin = "0000";
     const navigate = useNavigate();
     const location = useLocation();
     const datosTransferencia = location.state?.datosTransferencia;
     const beneficiario = location.state?.beneficiario;
     const datos = location.state?.datos;
     const id = location.state?.id;
+    const tarjeta = location.state?.tarjeta;
+    const totalesExterna = location.state?.totalesExterna;
     const clientAccount = location.state?.clientAccount;
+    const cuentaSeleccionada = location.state?.cuentaSeleccionada;
     const [loading, setLoading] = useState(false);
     const [modalConfirmar, setModalConfirmar] = useState(false);
     const [modalConfirmacion, setModalConfirmacion] = useState(false);
@@ -31,6 +34,74 @@ export const View_PreviewTransferencia = () => {
 
     useEffect(() => {
     }, []);
+
+    const transferenciaExterna = async (e) => {
+        // var formDecimal = datosTransferencia;
+        var cantidadDecimal = parseFloat(datosTransferencia.Cantidad) * 1;
+        var formDecimal = { ...datosTransferencia };
+        formDecimal.Id = id;
+        formDecimal.Referencia = datosTransferencia.Referencia;
+        formDecimal.Concepto = datosTransferencia.Concepto;
+        formDecimal.GuardaCuenta = datosTransferencia.GuardaCuenta;
+        formDecimal.Cantidad = cantidadDecimal;
+        formDecimal.NIP = pin;
+        formDecimal.Longitud = Ubicacion.Longitud;
+        formDecimal.Latitud = Ubicacion.Latitud;
+
+        if (datosTransferencia.IdCuenta === 0 || !datosTransferencia.IdCuenta) {
+            formDecimal.CuentaBanco = clientAccount;
+        } else {
+            formDecimal.CuentaBanco = cuentaSeleccionada;
+        }
+        setLoading(true);
+        await TransferToAccountE(formDecimal)
+            .then((data) => {
+                if (data.code === 0) {
+                    const idTransferencia = data.businessMeaning;
+                    navigate("/SuccessTransfer", { state: { datos: datos, datosTransferencia: datosTransferencia, beneficiario: beneficiario, id: id, idTransferencia: idTransferencia } });
+                    setLoading(false);
+                } else {
+                    setLoading(false);
+                    setMessage({
+                        isShow: true,
+                        text: data.businessMeaning,
+                        type: "danger",
+                    });
+                }
+            })
+            .catch((error) => {
+                setLoading(false)
+                if (error.response.status === 401) {
+                    if (error.response.data.code === 2011) {
+                        deleteStorage();
+                        navigate("/SignIn");
+                    } else {
+                        setMessage({
+                            text: error.message,
+                            type: "danger",
+                            isShow: true
+                        });
+                    }
+                }
+            });
+
+    };
+
+    const regresarAEditar = (e) => {
+        e.preventDefault();
+        navigate("/Transfer", {
+            state: {
+                id,
+                datos,
+                datosTransferencia,
+                beneficiario,
+                clientAccount,
+                totalesExterna,
+                tarjeta,
+                isEditing: true
+            }
+        });
+    };
 
     /*Método para salir*/
     const close = (e) => {
@@ -49,8 +120,7 @@ export const View_PreviewTransferencia = () => {
         if (typeof e === "string") {
             pin = e;
             setModalConfirmacion(false);
-            //transferenciaExterna();
-            navigate("/SuccessTransfer", { state: { datos: datos, datosTransferencia: datosTransferencia, beneficiario: beneficiario, id: id } });
+            transferenciaExterna();
         } else {
             if (e.target.name === "noBtn") {
                 setModalConfirmacion(false);
@@ -88,9 +158,9 @@ export const View_PreviewTransferencia = () => {
                 ></ModalConfirmation>
             )}
             {modalConfirmacion && (
-                <ModalGoogleAuth
+                <ModalConfirmationNIP
                     showModal={modalConfirmacion}
-                    message="¿Estás seguro de realizar la transferencia?"
+                    message={`¿Estás seguro de realizar la transferencia con una comisión de $${datos.comisionSpeiOut}?`}
                     closeModal={handleCloseConfirmacion}
                 />
             )}
@@ -102,7 +172,7 @@ export const View_PreviewTransferencia = () => {
                         <MDBox height="100%" width="100%">
                             <Card sx={{ maxWidth: "100%", height: "100%", borderRadius: "16px" }}>
                                 <Grid container alignItems="center" p={3}>
-                                    {/* <Grid item>
+                                    <Grid item>
                                         <Tooltip placement="top" title="Regresar">
                                             <IconButton
                                                 onClick={close}
@@ -111,22 +181,41 @@ export const View_PreviewTransferencia = () => {
                                                 <ArrowBack />
                                             </IconButton>
                                         </Tooltip>
-                                    </Grid> */}
+                                    </Grid>
                                     <Grid item xs>
                                         <MDTypography variant="h" fontWeight="bold">
                                             DETALLE TRANSFERENCIA
                                         </MDTypography>
                                     </Grid>
+
+                                    {/* <Grid item xs textAlign="right">
+                                        <MDTypography variant="h6" color="dark" fontWeight="bold">
+                                            $
+                                            {(tarjeta?.available ?? 0).toLocaleString("es-MX", {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
+                                        </MDTypography>
+                                    </Grid> */}
                                 </Grid>
 
-                                <MDBox px={{ xs: 2, md: 10 }} >
+                                <MDBox px={{ xs: 2, md: 5 }} >
                                     <Grid container alignItems="center" >
                                         <Grid item>
-                                            <MDTypography variant="caption" color="dark">
+                                            <MDTypography variant="button" color="text">
                                                 Monto a transferir:
                                             </MDTypography>
-                                            <MDTypography variant="h4" fontWeight="bold" color="dark">
-                                                ${parseFloat(datosTransferencia.Cantidad).toLocaleString("es-MX", {
+                                            <MDTypography
+                                                variant="h1"
+                                                fontWeight="bold"
+                                                color="dark"
+                                                sx={{
+                                                    fontSize: { xs: "2.5rem", md: "3.2rem" },
+                                                    display: "flex",
+                                                    alignItems: "baseline",
+                                                }}
+                                            >
+                                                ${parseFloat(datosTransferencia.Cantidad || 0).toLocaleString("es-MX", {
                                                     maximumFractionDigits: 2,
                                                     minimumFractionDigits: 2,
                                                 })}
@@ -135,97 +224,94 @@ export const View_PreviewTransferencia = () => {
                                     </Grid>
                                 </MDBox>
 
-
-
-                                <MDBox px={{ xs: 2, md: 5 }} py={5}>
+                                <MDBox px={{ xs: 2, md: 5 }}>
                                     <Grid container spacing={{ xs: 2, md: 6 }} justifyContent="left">
                                         <Grid item xs={12} md={5}>
-
-                                            <MDTypography variant="button" fontWeight="bold" color="text" textTransform="uppercase" display="block" >
+                                            {/* <MDTypography variant="button" fontWeight="bold" color="text" textTransform="uppercase" display="block" >
                                                 Cuenta Origen
                                             </MDTypography>
-                                            {/* <MDBox display="flex" alignItems="left" justifyContent="space-between" mb={4} mt={1} p={2} bgcolor={{ xs: "transparent", md: "#fafafa" }} borderRadius="12px">
-                                                <MDBox display="flex" alignItems="left">
-                                                    <MDBox
-                                                        width="45px"
-                                                        height="30px"
-                                                        borderRadius="4px"
-                                                        bgcolor="#004b8d"
-                                                        mr={2} /> */}
-                                            <MDBox display="flex" flexDirection="column" mt={2} mb={6}>
-                                                <MDTypography variant="body2" fontWeight="medium" color="dark">
+                                            <MDBox display="flex" flexDirection="column" mt={1} mb={3}>
+                                                <MDTypography variant="caption" fontWeight="medium">
                                                     {datos.nombre + " " + datos.apellidoPaterno}
                                                 </MDTypography>
                                                 <MDTypography variant="caption" color="text">
-                                                    {datos.numeroEnmascarado}
+                                                    {datos.numero || ""}
                                                 </MDTypography>
-                                                {/* </MDBox>
-                                                </MDBox>*/}
-                                            </MDBox>
+                                            </MDBox> */}
 
-                                            <MDTypography variant="button" fontWeight="bold" color="text" textTransform="uppercase" display="block" mb={1}>
+                                            {/* <MDTypography variant="button" fontWeight="bold" color="text" textTransform="uppercase" display="block">
                                                 Cuenta Destino
-                                            </MDTypography>
+                                            </MDTypography> */}
 
-                                            {/* <MDBox display="flex" alignItems="left" justifyContent="space-between" mb={4} mt={1} p={2} bgcolor={{ xs: "transparent", md: "#fafafa" }} borderRadius="12px">
-                                                <MDBox display="flex" alignItems="left">
-                                                    <MDBox
-                                                        width="45px"
-                                                        height="30px"
-                                                        borderRadius="4px"
-                                                        bgcolor="#004b8d"
-                                                        mr={2} /> */}
-                                            <MDBox display="flex" flexDirection="column" mt={2} mb={4}>
-                                                <MDTypography variant="body2" fontWeight="medium" color="dark">
-                                                    {clientAccount.Beneficiario || beneficiario.beneficiario}
+                                            {/* <MDBox display="flex" flexDirection="column" mt={1} mb={1}>
+                                                <MDTypography variant="caption" fontWeight="medium">
+                                                    {clientAccount?.Beneficiario || beneficiario?.beneficiario || ""}
                                                 </MDTypography>
                                                 <MDTypography variant="caption" color="text">
-                                                    {clientAccount.Valor || beneficiario.valor}
+                                                    {clientAccount?.Valor || beneficiario?.valor || ""}
                                                 </MDTypography>
-                                                {/* </MDBox>
-                                                </MDBox> */}
-                                            </MDBox>
+                                            </MDBox> */}
                                         </Grid>
 
                                         <Grid item xs={12} md={6}>
-
                                             <MDBox style={{ borderTop: "1px solid #f0f2f5" }}>
-                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={2} style={{ borderBottom: "1px solid #f0f2f5" }}>
-                                                    <MDTypography variant="body2" color="text">Tipo de beneficiario</MDTypography>
-                                                    <MDTypography variant="body2" fontWeight="bold" color="dark">Persona</MDTypography>
+                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={1} style={{ borderBottom: "1px solid #f0f2f5" }}>
+                                                    <MDTypography variant="button" color="text" fontWeight="regular">Beneficiario</MDTypography>
+                                                    <MDTypography variant="caption" fontWeight="medium">
+                                                        {clientAccount?.Beneficiario || beneficiario?.beneficiario || ""}
+                                                    </MDTypography>
                                                 </MDBox>
-
-                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={2} style={{ borderBottom: "1px solid #f0f2f5" }}>
-                                                    <MDTypography variant="body2" color="text">Número de cuenta</MDTypography>
-                                                    <MDTypography variant="body2" fontWeight="bold" color="dark">
+                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={1} style={{ borderBottom: "1px solid #f0f2f5" }}>
+                                                    <MDTypography
+                                                        variant="button"
+                                                        color="text"
+                                                        fontWeight="regular">Banco</MDTypography>
+                                                    <MDTypography variant="caption" fontWeight="medium">
+                                                        {beneficiario.banco}
+                                                    </MDTypography>
+                                                </MDBox>
+                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={1} style={{ borderBottom: "1px solid #f0f2f5" }}>
+                                                    <MDTypography variant="button"
+                                                        color="text"
+                                                        fontWeight="regular">Tipo de Cuenta</MDTypography>
+                                                    <MDTypography variant="caption" fontWeight="medium">
+                                                        {beneficiario.tipoCuenta}
+                                                    </MDTypography>
+                                                </MDBox>
+                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={1} style={{ borderBottom: "1px solid #f0f2f5" }}>
+                                                    <MDTypography
+                                                        variant="button"
+                                                        color="text"
+                                                        fontWeight="regular">{beneficiario.tipoCuenta === "40 - CLABE" ? "Número de cuenta" : "Número de tarjeta"}</MDTypography>
+                                                    <MDTypography variant="caption" fontWeight="medium">
                                                         {clientAccount.Valor || beneficiario.valor}
                                                     </MDTypography>
                                                 </MDBox>
-
-                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={2} style={{ borderBottom: "1px solid #f0f2f5" }}>
-                                                    <MDTypography variant="body2" color="text">Concepto</MDTypography>
-                                                    <MDTypography variant="body2" fontWeight="bold" color="dark">{datosTransferencia.concepto}</MDTypography>
+                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={1} style={{ borderBottom: "1px solid #f0f2f5" }}>
+                                                    <MDTypography
+                                                        variant="button"
+                                                        color="text"
+                                                        fontWeight="regular">Concepto</MDTypography>
+                                                    <MDTypography variant="caption" fontWeight="medium">{datosTransferencia.concepto}</MDTypography>
                                                 </MDBox>
 
-                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={2} style={{ borderBottom: "1px solid #f0f2f5" }}>
-                                                    <MDTypography variant="body2" color="text">Referencia numérica</MDTypography>
-                                                    <MDTypography variant="body2" fontWeight="bold" color="dark">{datosTransferencia.referencia}</MDTypography>
-                                                </MDBox>
-
-                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={2} style={{ borderBottom: "1px solid #f0f2f5" }}>
-                                                    <MDTypography variant="body2" color="text">Fecha y hora</MDTypography>
-                                                    <MDTypography variant="body2" fontWeight="bold" color="dark">Ahora mismo</MDTypography>
+                                                <MDBox display="flex" justifyContent="space-between" alignItems="center" py={1} style={{ borderBottom: "1px solid #f0f2f5" }}>
+                                                    <MDTypography
+                                                        variant="button"
+                                                        color="text"
+                                                        fontWeight="regular">Referencia numérica</MDTypography>
+                                                    <MDTypography variant="caption" fontWeight="medium">{datosTransferencia.referencia}</MDTypography>
                                                 </MDBox>
                                             </MDBox>
 
-                                            <MDBox mt={4} mb={4} align="center">
+                                            {/* <MDBox mt={4} mb={4} align="center">
                                                 <MDTypography variant="caption" color="text" style={{ fontSize: "0.75rem" }}>
                                                     Tus transferencias interbancarias son gratis y seguras.
                                                 </MDTypography>
-                                            </MDBox>
+                                            </MDBox> */}
 
-                                            <Grid container spacing={2} mb={2}>
-                                                <Grid item xs={6}>
+                                            <Grid container spacing={2} mb={2} mt={2} >
+                                                {/* <Grid item xs={12} md={6}>
                                                     <MDButton
                                                         fullWidth
                                                         size="large"
@@ -236,15 +322,40 @@ export const View_PreviewTransferencia = () => {
                                                         style={{
                                                             boxShadow: "none",
                                                             borderRadius: "12px"
-                                                        }}
-                                                    >
+                                                        }}>
                                                         <MDTypography variant="button" fontWeight="bold" color="white">
                                                             SALIR
                                                         </MDTypography>
                                                     </MDButton>
+                                                </Grid> */}
+
+                                                <Grid item xs={12} md={6}>
+                                                    <MDButton
+                                                        fullWidth
+                                                        type="button"
+                                                        variant="gradient"
+                                                        size="large"
+                                                        color="secondary"
+                                                        onClick={regresarAEditar}
+                                                        style={{
+                                                            color: "white",
+                                                            borderRadius: "12px"
+                                                        }}>
+                                                        <Edit
+                                                            sx={{
+                                                                width: "20px",
+                                                                height: "20px",
+                                                                color: "white !important",
+                                                            }}
+                                                        />
+                                                        &nbsp;
+                                                        <MDTypography variant="button" fontWeight="bold" color="white">
+                                                            EDITAR
+                                                        </MDTypography>
+                                                    </MDButton>
                                                 </Grid>
 
-                                                <Grid item xs={6}>
+                                                <Grid item xs={12} md={6}>
                                                     <MDButton
                                                         fullWidth
                                                         type="button"
@@ -256,6 +367,14 @@ export const View_PreviewTransferencia = () => {
                                                             color: "white",
                                                             borderRadius: "12px"
                                                         }}>
+                                                        <CheckCircle
+                                                            sx={{
+                                                                width: "20px",
+                                                                height: "20px",
+                                                                color: "white !important",
+                                                            }}
+                                                        />
+                                                        &nbsp;
                                                         <MDTypography variant="button" fontWeight="bold" color="white">
                                                             CONFIRMAR
                                                         </MDTypography>

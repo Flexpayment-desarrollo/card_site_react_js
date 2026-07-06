@@ -27,6 +27,18 @@ export const View_DispersarMonedero = ({ refresh }) => {
 
   /*Método para todos los autocomplete*/
   const handleChangeSelect = (event, newValue) => {
+    // Si el usuario borró el valor
+    if (!newValue) {
+      // Buscamos cuál input se borró usando el ID del contenedor del evento o el target
+      const targetId = event.currentTarget.querySelector("input")?.id || "";
+      const name = targetId.split("-")[0];
+
+      if (name === "IdDispersion") {
+        setDefaultDispersion({ id: 0, label: "" });
+      }
+      return;
+    }
+
     const { id } = event.target;
     let name = id.split("-")[0];
     switch (name) {
@@ -65,10 +77,7 @@ export const View_DispersarMonedero = ({ refresh }) => {
                     </MDTypography>
                   </Grid>
                   <Grid item xs={12} textAlign="left" mt={2} ml={1}>
-                    <MDTypography
-                      variant="h6"
-                      color="dark"
-                    >
+                    <MDTypography variant="h6" color="dark">
                       {" "}
                       SALDO MONEDERO: $
                       {datos.saldoMonedero.toLocaleString("es-MX", {

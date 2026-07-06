@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Loading from "Global/Loading/Loading";
 import dayjs from "dayjs";
-import Alert from "Global/Alert";
 import MDBox from "components/MDBox";
+import MDAlert from "components/MDAlert";
 import MDTypography from "components/MDTypography";
 import MDButton from "components/MDButton";
 import EasyCard from "assets/images/EasyCard.png";
@@ -15,6 +15,7 @@ import {
   ArrowBack,
   ContentCopy,
   Error,
+  Refresh,
   Send,
   Visibility,
   VisibilityOff,
@@ -40,7 +41,8 @@ import {
 import Component_ContadorNIP from "ComponentsEasy/Card/Component_ContadorNIP";
 import { Component_CVVDinamico } from "ComponentsEasy/Card/Component_CVVDinamico";
 import { Component_TableMovmentsCard } from "ComponentsEasy/Card/Component_TableMovmentsCard";
-import MDAlert from "components/MDAlert";
+import { getMovementsTransfer } from "Services/Card/Service_Card";
+import { Component_TableMovementsT } from "ComponentsEasy/Card/Component_TableMovementsT";
 
 export const View_Card = () => {
   const navigate = useNavigate();
@@ -49,7 +51,9 @@ export const View_Card = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [loading, setLoading] = useState(false);
+  const [tabActivo, setTabActivo] = useState("normales"); // Puede ser 'normales' o 'transfer'
   const [listMovimientos, setListMovimientos] = useState([]);
+  const [listMovimientosT, setListMovimientosT] = useState([]);
   const [showTransferir, setShowTransferir] = useState(false);
   const [nip, setNip] = useState("0000");
   const [showNip, setShowNip] = useState(false);
@@ -60,7 +64,7 @@ export const View_Card = () => {
     useState(false);
   const [dateStart, setDateStart] = useState(dayjs(new Date()));
   const [datos, setDatos] = useState({
-    numeroEnmascarado: "0000000000000000",
+    numero: "0000000000000000",
     saldoMonedero: 0,
   });
   const [tarjeta, setTarjeta] = useState({
@@ -71,6 +75,8 @@ export const View_Card = () => {
     isShow: false,
   });
 
+  // EFECTO EXCLUSIVO PARA EL TIMER DE LA ALERTA
+  // Este solo se ejecutará cuando la alerta aparezca o cambie
   useEffect(() => {
     if (isAlertValide && message.isShow) {
       const timer = setTimeout(() => {
@@ -80,20 +86,23 @@ export const View_Card = () => {
 
       return () => clearTimeout(timer);
     }
-
-    DetalleTarjeta();
   }, [isAlertValide, message.isShow]);
 
-  const establecerRangoMes = (tipo = "actual") => {
+  // EFECTO EXCLUSIVO PARA LA CARGA INICIAL
+  useEffect(() => {
+    DetalleTarjeta();
+  }, []);
+
+  const establecerRangoMes = (tipo = "normales") => {
     const hoy = dayjs();
     let inicio, fin;
 
-    if (tipo === "actual") {
+    if (tipo === "normales") {
       inicio = hoy.startOf("month");
       fin = hoy;
     } else {
-      inicio = hoy.subtract(1, "month").startOf("month");
-      fin = hoy.subtract(1, "month").endOf("month");
+      inicio = hoy.startOf("month");
+      fin = hoy;
     }
 
     setDateStart(inicio);
@@ -196,7 +205,7 @@ export const View_Card = () => {
         setIsAlertValide(true);
       }
     } finally {
-      setLoading(false);
+      //setLoading(false);
     }
   }
 
@@ -208,9 +217,16 @@ export const View_Card = () => {
     setLoading(true);
     try {
       const res = await watchNIP(sendData);
-      console.log(res);
       if (res.code === 0) {
         setNip(res.businessMeaning);
+      } else if (res.code === 400) {
+        setLoading(false);
+        setMessage({
+          isShow: true,
+          text: "Error con el proveedor, consulta con el administrador",
+          type: "error",
+        });
+        setIsAlertValide(true);
       } else {
         setLoading(false);
         setMessage({
@@ -221,7 +237,6 @@ export const View_Card = () => {
         setIsAlertValide(true);
       }
     } catch (error) {
-      console.log(error);
       setLoading(false);
       if (error.response && error.response.status === 401) {
         if (error.response.data.code === 2011) {
@@ -310,6 +325,51 @@ export const View_Card = () => {
           } else {
             setListMovimientos([]);
           }
+          getMovimientosTransfer(inicioStr, finStr);
+        } else {
+          setLoading(false);
+          setMessage({
+            isShow: true,
+            text: data.businessMeaning,
+            type: "error",
+          });
+          setIsAlertValide(true);
+        }
+      })
+      .catch((error) => {
+        setLoading(false);
+        if (error.response.status === 401) {
+          if (error.response.data.code === 2011) {
+            deleteStorage();
+            navigate("/SignIn");
+          } else {
+            setMessage({
+              text: error.message,
+              type: "error",
+              isShow: true,
+            });
+            setIsAlertValide(true);
+          }
+        }
+      });
+  };
+
+  //Método que obtiene la lista de los movimientos
+  const getMovimientosTransfer = async (inicioStr, finStr) => {
+    const datos = {
+      Id: info,
+      DateInit: inicioStr,
+      DateEnd: finStr,
+    };
+    setLoading(true);
+    await getMovementsTransfer(datos)
+      .then((data) => {
+        if (data.code === 0) {
+          if (data.data !== null) {
+            setListMovimientosT(data.data || []);
+          } else {
+            setListMovimientosT([]);
+          }
           setLoading(false);
         } else {
           setLoading(false);
@@ -339,6 +399,36 @@ export const View_Card = () => {
       });
   };
 
+  //Método para copiar el número de tarjeta
+  const copiarAlPortapapeles = async () => {
+    try {
+      await navigator.clipboard.writeText(datos.numero);
+
+      setMessage({
+        isShow: true,
+        text: "Número de tarjeta copiado al portapapeles",
+        type: "success",
+      });
+      setIsAlertValide(true);
+    } catch (err) {
+      setMessage({
+        isShow: true,
+        text: "No se pudo copiar el número automáticamente",
+        type: "error",
+      });
+      setIsAlertValide(true);
+    }
+  };
+
+  const formatearNumeroTarjeta = (numero) => {
+    if (!numero) return "";
+    return numero
+      .toString()
+      .replace(/\s?/g, "")
+      .replace(/(\d{4})/g, "$1 ")
+      .trim();
+  };
+
   /*Método para abrir el modal de bloquear o desbloquear*/
   const bloquearODesbloquear = (e) => {
     e.preventDefault();
@@ -359,7 +449,7 @@ export const View_Card = () => {
 
   const crearTransferencia = () => {
     navigate("/Transfer", {
-      state: { id: datos.id, datos: datos },
+      state: { id: datos.id, datos: datos, tarjeta: tarjeta },
     });
   };
 
@@ -398,28 +488,12 @@ export const View_Card = () => {
   };
 
   const refresh = () => {
-    setShowTransferir(false);
     DetalleTarjeta();
-  };
-
-  /** Metodo que limpia los mensajes */
-  const clearMessage = () => {
-    setMessage({
-      isShow: false,
-    });
   };
 
   return (
     <>
       {loading && <Loading show={loading} />}
-      {/* {message.isShow && (
-        <Alert
-          alert={message.type}
-          message={message.text}
-          onClose={clearMessage}
-          open={message.isShow}
-        />
-      )} */}
       {modalConfirmacionBloquear && (
         <ModalConfirmation
           showModal={modalConfirmacionBloquear}
@@ -434,321 +508,6 @@ export const View_Card = () => {
 
       <DashboardLayout>
         <DashboardNavbar />
-        {/* <MDBox>
-          <Grid container spacing={3} mb={3}>
-            <Grid item xs={12}>
-              <Card sx={{ p: isMobile ? 2 : 3 }}>
-                <Grid container alignItems="center" mb={3}>
-                  <Grid item xs={6} sm={6}>
-                    <Tooltip placement="top" title="Regresar">
-                      <IconButton
-                        onClick={() => navigate("/Cards")}
-                        sx={{
-                          background: grey[100],
-                          color: "#41464b",
-                          "&:hover": { background: grey[200] },
-                        }}
-                      >
-                        <ArrowBack />
-                      </IconButton>
-                    </Tooltip>
-                  </Grid>
-                  <Grid item xs={6} sm={6} style={{ textAlign: "right" }}>
-                    <Tooltip placement="top" title="Refrescar">
-                      <IconButton onClick={DetalleTarjeta}>
-                        <Refresh />
-                      </IconButton>
-                    </Tooltip>
-                  </Grid>
-                </Grid>
-
-                <Grid
-                  container
-                  spacing={2}
-                  justifyContent="center"
-                  alignItems="center"
-                >
-                  <Grid
-                    item
-                    xs={12}
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    mb={2}
-                  >
-                    <MDBox
-                      sx={{
-                        width: isMobile ? "100%" : "400px",
-                        maxWidth: "400px",
-                        "& > div": { width: "100% !important" },
-                        transition: "all 0.3s ease", // Animación suave al cambiar
-                      }}
-                    >
-                      <MasterCard
-                        number={datos.numeroEnmascarado}
-                        holder={`${datos.nombre} ${datos.apellidoPaterno}`}
-                        expires={tarjeta.expirationDate}
-                      />
-                    </MDBox>
-                  </Grid>
-                  <Grid
-                    container
-                    item
-                    xs={12}
-                    spacing={2}
-                    justifyContent="space-around"
-                  >
-                    <Grid item xs={3} sm={3}></Grid>
-                    <Grid item xs={3} sm={3} textAlign="center">
-                      <MDTypography
-                        variant="caption"
-                        color="text"
-                        fontWeight="bold"
-                        display="block"
-                      >
-                        DISPONIBLE
-                      </MDTypography>
-                      <MDTypography
-                        variant={isMobile ? "h6" : "h5"}
-                        color="dark"
-                        fontWeight="bold"
-                      >
-                        $
-                        {tarjeta.available.toLocaleString("es-MX", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </MDTypography>
-                    </Grid>
-                    <Grid item xs={3} sm={3} textAlign="center">
-                      <MDTypography
-                        variant="caption"
-                        color="text"
-                        fontWeight="bold"
-                        display="block"
-                      >
-                        SALDO MONEDERO
-                      </MDTypography>
-                      <MDTypography
-                        variant={isMobile ? "h6" : "h5"}
-                        color="dark"
-                        fontWeight="bold"
-                      >
-                        $
-                        {datos.saldoMonedero.toLocaleString("es-MX", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </MDTypography>
-                    </Grid>
-                    <Grid item xs={3} sm={3}></Grid>
-
-                    <Grid item xs={3} sm={3} textAlign="right">
-                      <MDTypography
-                        variant="caption"
-                        fontWeight="bold"
-                        color="text"
-                        display="block"
-                      >
-                        ESTATUS
-                      </MDTypography>
-                      <Switch
-                        onChange={bloquearODesbloquear}
-                        id={info.toString()}
-                        checked={tarjeta.status === "ACTIVE" ? true : false}
-                        sx={{
-                          "& .MuiSwitch-switchBase": {
-                            "&.Mui-checked": {
-                              "+ .MuiSwitch-track": {
-                                backgroundColor: "#ff5f00",
-                              },
-                              ".MuiSwitch-thumb": {
-                                backgroundColor: "#4caf4f",
-                              },
-                              "+ .MuiSwitch-track": {
-                                backgroundColor: "#dacece !important",
-                                border: "#ced4da",
-                              },
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={3} sm={3} textAlign="center">
-                      <MDTypography
-                        variant="caption"
-                        fontWeight="bold"
-                        color="text"
-                        display="block"
-                      >
-                        NIP
-                      </MDTypography>
-                      <MDBox
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                      >
-                        {showNip && (
-                          <MDTypography
-                            variant="h6"
-                            color="info"
-                            sx={{ mr: 1 }}
-                          >
-                            {nip}
-                          </MDTypography>
-                        )}
-                        <Tooltip title={showNip ? "Ocultar" : "Ver"}>
-                          <IconButton
-                            onClick={showNip ? btnHideNip : btnShowNip}
-                            sx={{ background: grey[100], p: 1 }}
-                          >
-                            {showNip ? (
-                              <FaEyeSlash size={16} />
-                            ) : (
-                              <MdOutlinePassword size={16} />
-                            )}
-                          </IconButton>
-                        </Tooltip>
-                      </MDBox>
-                      {showNip && (
-                        <MDBox mt={0.5}>
-                          <Component_ContadorNIP
-                            segundosIniciales={30}
-                            alTerminar={btnHideNip}
-                          />
-                        </MDBox>
-                      )}
-                    </Grid>
-                    <Grid item xs={3} sm={3} textAlign="left">
-                      <MDTypography
-                        variant="caption"
-                        fontWeight="bold"
-                        color="text"
-                        display="block"
-                      >
-                        CVV
-                      </MDTypography>
-                      <MDBox
-                        display="flex"
-                        alignItems="left"
-                        justifyContent="left"
-                      >
-                        {showCVV && (
-                          <MDTypography
-                            variant="h6"
-                            color="info"
-                            sx={{ mr: 1 }}
-                          >
-                            {CVV}
-                          </MDTypography>
-                        )}
-                        <Tooltip title={showCVV ? "Ocultar" : "Ver"}>
-                          <IconButton
-                            onClick={showCVV ? btnHideCVV : btnShowCVV}
-                            sx={{ background: grey[100], p: 1 }}
-                          >
-                            {showCVV ? (
-                              <RiLockPasswordFill size={16} />
-                            ) : (
-                              <MdOutlinePassword size={16} />
-                            )}
-                          </IconButton>
-                        </Tooltip>
-                      </MDBox>
-                      {showCVV && (
-                        <MDBox mt={0.5}>
-                          <Component_CVVDinamico
-                            info={info}
-                            segundosIniciales={240}
-                            alTerminar={btnHideCVV}
-                          />
-                        </MDBox>
-                      )}
-                    </Grid>
-                  </Grid>
-
-                  <Grid
-                    item
-                    xs={12}
-                    display="flex"
-                    justifyContent={isMobile ? "center" : "flex-end"}
-                    gap={2}
-                    mt={2}
-                  >
-                    <MDButton
-                      variant="gradient"
-                      color="error"
-                      size="small"
-                      onClick={transferirCardToCard}
-                      startIcon={<FaMoneyBillTransfer size={16} />}
-                    >
-                      TRANSFERIR A TARJETA
-                    </MDButton>
-                    <MDButton
-                      variant="gradient"
-                      color="error"
-                      size="small"
-                      onClick={dispersionMonedero}
-                      startIcon={<FaWallet size={16} />}
-                    >
-                      MONEDERO
-                    </MDButton>
-                    <MDButton
-                      variant="gradient"
-                      color="info"
-                      size="small"
-                      onClick={crearTransferencia}
-                      startIcon={<Send />}
-                    >
-                      TRANSFERIR
-                    </MDButton>
-                  </Grid>
-                </Grid>
-              </Card>
-            </Grid>
-          </Grid>
-
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Card sx={{ p: 2 }}>
-                <MDBox
-                  display="flex"
-                  flexDirection={isMobile ? "row" : "row"}
-                  gap={2}
-                  mb={2}
-                >
-                  <MDButton
-                    variant={
-                      dateStart.isSame(dayjs(), "month")
-                        ? "gradient"
-                        : "outlined"
-                    }
-                    color="info"
-                    fullWidth={isMobile}
-                    onClick={() => establecerRangoMes("actual")}
-                  >
-                    Mes Actual
-                  </MDButton>
-                  <MDButton
-                    variant={
-                      !dateStart.isSame(dayjs(), "month")
-                        ? "gradient"
-                        : "outlined"
-                    }
-                    color="info"
-                    fullWidth={isMobile}
-                    onClick={() => establecerRangoMes("anterior")}
-                  >
-                    Mes Anterior
-                  </MDButton>
-                </MDBox>
-                <Component_TableMovmentsCard
-                  listMovimientos={listMovimientos}
-                />
-              </Card>
-            </Grid>
-          </Grid>
-        </MDBox> */}
-
         {showTransferir && <View_Transferir cerrar={cerrar} />}
 
         <MDBox mt={1}>
@@ -781,158 +540,6 @@ export const View_Card = () => {
                 </IconButton>
               </MDBox>
 
-              {/* TARJETA ESTILO NEGRO (Basada en image_791f75.png) */}
-              {/* <Card
-                sx={{
-                  bgcolor: "#000",
-                  color: "#fff",
-                  borderRadius: 4,
-                  overflow: "hidden",
-                  mb: 3,
-                  boxShadow: 6,
-                }}
-              >
-                <MDBox p={3}>
-                  <MDBox display="flex" justifyContent="space-between" mb={3}>
-                    <MDBox>
-                      <MDTypography
-                        variant="caption"
-                        color="white"
-                        opacity={0.6}
-                        textTransform="uppercase"
-                      >
-                        Número de Tarjeta
-                      </MDTypography>
-                      <MDTypography
-                        variant="h5"
-                        color="white"
-                        sx={{ letterSpacing: 4, mt: 0.5 }}
-                      >
-                        {datos.numeroEnmascarado}
-                      </MDTypography>
-                    </MDBox>
-                    <IconButton
-                      size="small"
-                      sx={{ color: "#fff", alignSelf: "flex-start" }}
-                    >
-                      <ContentCopy fontSize="small" />
-                    </IconButton>
-                  </MDBox>
-
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <MDTypography
-                        variant="caption"
-                        color="white"
-                        opacity={0.6}
-                        textTransform="uppercase"
-                      >
-                        Vence
-                      </MDTypography>
-                      <MDTypography variant="h6" color="white">
-                        {tarjeta.expirationDate}
-                      </MDTypography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <MDTypography
-                        variant="caption"
-                        color="white"
-                        opacity={0.6}
-                        textTransform="uppercase"
-                      >
-                        CVV Dinámico
-                      </MDTypography>
-                      <MDBox display="flex" alignItems="center">
-                        <MDTypography variant="h6" color="white" mr={1}>
-                          {showCVV ? CVV : "•••"}
-                        </MDTypography>
-                        <IconButton
-                          onClick={showCVV ? btnHideCVV : btnShowCVV}
-                          size="small"
-                          sx={{ color: "#fff" }}
-                        >
-                          {showCVV ? (
-                            <VisibilityOff fontSize="small" />
-                          ) : (
-                            <Visibility fontSize="small" />
-                          )}
-                        </IconButton>
-                      </MDBox>
-                      {showCVV && (
-                        <MDBox
-                          mt={0.5}
-                          sx={{
-                            "& *": {
-                              color: "#fff !important",
-                              fontSize: "10px",
-                            },
-                          }}
-                        >
-                          <Component_CVVDinamico
-                            info={info}
-                            segundosIniciales={240}
-                            alTerminar={btnHideCVV}
-                          />
-                        </MDBox>
-                      )}
-                    </Grid>
-                  </Grid>
-                </MDBox>
-
-                <MDBox
-                  sx={{ bgcolor: "#f8f9fa", p: 2, display: "flex", gap: 2 }}
-                >
-                  <MDBox
-                    sx={{
-                      bgcolor: "#fff",
-                      borderRadius: 2,
-                      flex: 1,
-                      p: 1.5,
-                      textAlign: "center",
-                      boxShadow: 1,
-                    }}
-                  >
-                    <MDTypography
-                      variant="caption"
-                      color="text"
-                      fontWeight="bold"
-                    >
-                      SALDO DISPONIBLE
-                    </MDTypography>
-                    <MDTypography variant="h6" color="dark">
-                      $
-                      {tarjeta.available.toLocaleString("es-MX", {
-                        minimumFractionDigits: 2,
-                      })}{" "}
-                    </MDTypography>
-                  </MDBox>
-                  <MDBox
-                    sx={{
-                      bgcolor: "#fff",
-                      borderRadius: 2,
-                      flex: 1,
-                      p: 1.5,
-                      textAlign: "center",
-                      boxShadow: 1,
-                    }}
-                  >
-                    <MDTypography
-                      variant="caption"
-                      color="text"
-                      fontWeight="bold"
-                    >
-                      MONEDERO
-                    </MDTypography>
-                    <MDTypography variant="h6" color="dark">
-                      $
-                      {datos.saldoMonedero.toLocaleString("es-MX", {
-                        minimumFractionDigits: 2,
-                      })}{" "}
-                    </MDTypography>
-                  </MDBox>
-                </MDBox>
-              </Card> */}
-
               <Card
                 sx={{
                   bgcolor: "#ffffff79",
@@ -963,32 +570,11 @@ export const View_Card = () => {
                     alignItems="flex-start"
                   >
                     <MDBox></MDBox>
-                    {/* <MDBox>
-                      <MDTypography
-                        variant="caption"
-                        color="gray"
-                        fontWeight="bold"
-                        sx={{
-                          opacity: 0.8,
-                          textTransform: "uppercase",
-                          fontSize: 10,
-                        }}
-                      >
-                        Número de Tarjeta
-                      </MDTypography>
-                      <MDTypography
-                        variant="h5"
-                        color="gray"
-                        sx={{
-                          letterSpacing: 3,
-                          mt: 0.5,
-                          textShadow: "1px 1px 3px rgba(0,0,0,0.1)",
-                        }}
-                      >
-                        {datos.numeroEnmascarado}
-                      </MDTypography>
-                    </MDBox> */}
-                    <IconButton size="small" sx={{ color: "#7b809a" }}>
+                    <IconButton
+                      size="small"
+                      sx={{ color: "#7b809a" }}
+                      onClick={copiarAlPortapapeles}
+                    >
                       <ContentCopy fontSize="small" />
                     </IconButton>
                   </MDBox>
@@ -997,7 +583,6 @@ export const View_Card = () => {
                     display="flex"
                     justifyContent="space-between"
                     alignItems="flex-start"
-                    // mt={2}
                     mt={isMobile ? 2 : 0}
                   >
                     <MDBox>
@@ -1022,7 +607,7 @@ export const View_Card = () => {
                           textShadow: "1px 1px 3px rgba(0,0,0,0.1)",
                         }}
                       >
-                        {datos.numeroEnmascarado}
+                        {formatearNumeroTarjeta(datos.numero)}{" "}
                       </MDTypography>
                     </MDBox>
                   </MDBox>
@@ -1068,13 +653,13 @@ export const View_Card = () => {
                         alignItems="center"
                         justifyContent="flex-end"
                       >
-                        <MDTypography variant="h6" color="gray" mr={1}>
+                        <MDTypography variant="h6" color="info" mr={1}>
                           {showCVV ? CVV : "•••"}
                         </MDTypography>
                         <IconButton
                           onClick={showCVV ? btnHideCVV : btnShowCVV}
                           size="small"
-                          sx={{ p: 0, color: "#7b809a" }}
+                          sx={{ p: 0, color: "#ff5000" }}
                         >
                           {showCVV ? (
                             <VisibilityOff fontSize="small" />
@@ -1206,7 +791,8 @@ export const View_Card = () => {
                       Estado de Tarjeta
                     </MDTypography>
                     <MDTypography
-                      variant="caption"
+                      variant="button"
+                      fontWeight="regular"
                       color="text"
                       display="block"
                     >
@@ -1229,7 +815,7 @@ export const View_Card = () => {
                 >
                   <MDBox>
                     <MDTypography variant="button" fontWeight="bold">
-                      NIP de Cajero
+                      NIP
                     </MDTypography>
                     <MDBox display="flex" alignItems="center" gap={1}>
                       <MDTypography variant="h6" color="info">
@@ -1276,7 +862,7 @@ export const View_Card = () => {
                       size={24}
                       style={{ marginBottom: "8px" }}
                     />
-                    <span style={{ fontSize: "10px" }}>Transferir</span>
+                    <span style={{ fontSize: "10px" }}>EasyCard</span>
                   </MDButton>
                 </Grid>
                 <Grid item xs={4}>
@@ -1315,41 +901,48 @@ export const View_Card = () => {
                   justifyContent="space-between"
                   alignItems="center"
                 >
-                  <MDTypography variant="h6" fontWeight="bold">
+                  {/* <MDTypography variant="h6" fontWeight="bold">
                     Movimientos
-                  </MDTypography>
+                  </MDTypography> */}
                   <MDBox display="flex" gap={1}>
                     <MDButton
                       variant={
-                        dateStart.isSame(dayjs(), "month")
-                          ? "gradient"
-                          : "outlined"
+                        tabActivo === "normales" ? "gradient" : "outlined"
                       }
                       color="info"
                       size="small"
-                      onClick={() => establecerRangoMes("actual")}
+                      onClick={() => setTabActivo("normales")}
                     >
-                      Mes Actual
+                      Movimientos
                     </MDButton>
-                    {/* <MDButton
+                    <MDButton
                       variant={
-                        !dateStart.isSame(dayjs(), "month")
-                          ? "gradient"
-                          : "outlined"
+                        tabActivo === "transfer" ? "gradient" : "outlined"
                       }
                       color="info"
                       size="small"
-                      onClick={() => establecerRangoMes("anterior")}
+                      onClick={() => setTabActivo("transfer")}
                     >
-                      Mes Anterior
-                    </MDButton> */}
+                      Envíos a Terceros
+                    </MDButton>
                   </MDBox>
+                  <Tooltip title="Refrescar">
+                    <IconButton onClick={refresh}>
+                      <Refresh />
+                    </IconButton>
+                  </Tooltip>
                 </MDBox>
 
-                <MDBox px={2} pb={2}>
-                  <Component_TableMovmentsCard
-                    listMovimientos={listMovimientos}
-                  />
+                <MDBox pb={2}>
+                  {tabActivo === "normales" ? (
+                    <Component_TableMovmentsCard
+                      listMovimientos={listMovimientos}
+                    />
+                  ) : (
+                    <Component_TableMovementsT
+                      listMovimientos={listMovimientosT}
+                    />
+                  )}
                 </MDBox>
               </Card>
             </Grid>

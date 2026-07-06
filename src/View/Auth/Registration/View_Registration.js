@@ -448,7 +448,7 @@ export const View_Registration = () => {
             {/* <BasicLayout illustration={bgImage}> */}
             <PageLayout>
                 <MDBox
-                    px={isMobile ? 1 : 2} 
+                    px={isMobile ? 1 : 2}
                     width="100%"
                     display="flex"
                     justifyContent="center"
@@ -501,7 +501,8 @@ export const View_Registration = () => {
                                 <MDTypography
                                     variant={isMobile ? "h6" : "h5"}
                                     fontWeight="bold"
-                                    sx={{ color: grey[800] }}
+                                    color="dark"
+                                // sx={{ color: grey[800] }}
                                 >
                                     REGISTRO
                                 </MDTypography>
@@ -618,6 +619,7 @@ export const View_Registration = () => {
                                         fullWidth
                                         value={Correo}
                                         onChange={handleChange}
+                                        inputProps={{ maxLength: 50 }}
                                         required
                                     />
                                 </Grid>
@@ -644,6 +646,7 @@ export const View_Registration = () => {
                                         label="Contraseña"
                                         fullWidth
                                         value={Password}
+                                        inputProps={{ maxLength: 50 }}
                                         onChange={handleChange}
                                     />
                                 </Grid>
@@ -656,6 +659,7 @@ export const View_Registration = () => {
                                         label="Confirmar Contraseña"
                                         fullWidth
                                         value={confirmPassword}
+                                        inputProps={{ maxLength: 50 }}
                                         onChange={handleConfirmPasswordChange}
                                     />
                                 </Grid>

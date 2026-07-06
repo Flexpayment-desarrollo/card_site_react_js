@@ -128,7 +128,11 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
         getGenderList();
         getIdentificationList();
         setDateBirth(dayjs(initialDate));
+    }, []);
 
+    // EFECTO EXCLUSIVO PARA EL TIMER DE LA ALERTA
+    // Este solo se ejecutará cuando la alerta aparezca o cambie
+    useEffect(() => {
         if (isAlertValide && message.isShow) {
             const timer = setTimeout(() => {
                 setIsAlertValide(false);
@@ -502,9 +506,48 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
     };
 
     const handleChangeSelect = (event, newValue) => {
-        let name = event.target.id.split("-")[0];
+
+        // Buscamos cuál input se borró usando el ID del contenedor del evento o el target
+        const targetId = event.currentTarget.querySelector('input')?.id || event.target.id || "";
+        let name = targetId.split("-")[0];
+        // let name = event.target.id.split("-")[0];
         if (name === "")
             return;
+
+        // Si el usuario borró el valor
+        if (!newValue) {
+            switch (name) {
+                case "ddlState":
+                    setStateDic("");
+                    setCityDic("");
+                    setCityList([""]);
+                    setColonyList([{ id: 0, label: '' }]);
+                    setDefaultIdCP({ id: 0, label: '' });
+                    setFormData({ ...formData, IdCP: 0 });
+                    break;
+                case "ddlCity":
+                    setCityDic("");
+                    setColonyList([{ id: 0, label: '' }]);
+                    setDefaultIdCP({ id: 0, label: '' });
+                    setFormData({ ...formData, IdCP: 0 });
+                    break;
+                case "IdCP":
+                    setFormData({ ...formData, IdCP: 0 });
+                    setDefaultIdCP({ id: 0, label: "" });
+                    break;
+                case "IdTipoIdentificacion":
+                    setFormData({ ...formData, IdTipoIdentificacion: 0 });
+                    setDefaultTipoIdent({ id: 0, label: "" });
+                    break;
+                case "IdGenero":
+                    setFormData({ ...formData, IdGenero: 0 });
+                    setDefaultGenero({ id: 0, label: "" });
+                    break;
+            }
+            return;
+        }
+
+        //Proceso normal
         switch (name) {
             case "ddlState":
                 setStateDic(newValue);
@@ -971,7 +1014,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                             </Tooltip>
                         </Grid>
                         <Grid item xs>
-                            <MDTypography variant="h5">Registrar Tarjetahabiente</MDTypography>
+                            <MDTypography variant="h5">REGISTRAR TARJETAHABIENTE</MDTypography>
                         </Grid>
                     </Grid>
 
@@ -1006,7 +1049,6 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                             </Grid>
 
                             <Grid item md={6} sx={{ display: { xs: 'none', md: 'block' } }}></Grid>
-
                             <Grid item xs={12} sm={6} md={3}>
                                 <FormField
                                     error={errorFlag.nombre}
@@ -1015,6 +1057,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                                     label="Nombre"
                                     fullWidth
                                     value={Nombre}
+                                    inputProps={{ maxLength: 20 }}
                                     onChange={handleChangeAlphanumericSpace}
                                     required
                                 />
@@ -1025,6 +1068,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                                     label="Segundo Nombre"
                                     fullWidth
                                     value={SegundoNombre}
+                                    inputProps={{ maxLength: 20 }}
                                     onChange={handleChangeAlphanumericSpace}
                                 />
                             </Grid>
@@ -1036,6 +1080,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                                     label="Apellido Paterno"
                                     fullWidth
                                     value={ApellidoPaterno}
+                                    inputProps={{ maxLength: 20 }}
                                     onChange={handleChangeAlphanumericSpace}
                                     required
                                 />
@@ -1048,6 +1093,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                                     label="Apellido Materno"
                                     fullWidth
                                     value={ApellidoMaterno}
+                                    inputProps={{ maxLength: 20 }}
                                     onChange={handleChangeAlphanumericSpace}
                                     required
                                 />
@@ -1126,6 +1172,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                                     label="No Identificación"
                                     fullWidth
                                     value={NoIdentificacion}
+                                    inputProps={{ maxLength: 20 }}
                                     onChange={handleChangeNumber}
                                     required
                                 />
@@ -1138,6 +1185,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                                     label="Correo"
                                     fullWidth
                                     value={Email}
+                                    inputProps={{ maxLength: 35 }}
                                     onChange={handleChange}
                                     required
                                 />
@@ -1200,6 +1248,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                                     label="Calle"
                                     fullWidth
                                     value={Direccion}
+                                    inputProps={{ maxLength: 50 }}
                                     onChange={handleChangeAlphanumericSpace}
                                     required
                                 />
@@ -1212,6 +1261,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                                     label="Exterior"
                                     fullWidth
                                     value={Exterior}
+                                    inputProps={{ maxLength: 5 }}
                                     onChange={handleChangeNumber}
                                     required
                                 />
@@ -1222,6 +1272,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                                     label="Interior"
                                     fullWidth
                                     value={Interior}
+                                    inputProps={{ maxLength: 5 }}
                                     onChange={handleChangeNumber}
                                 />
                             </Grid>
@@ -1254,7 +1305,7 @@ export const Component_RegistrarSinTh = ({ closeDetail, datos }) => {
                             <Grid item xs={12} sm="auto">
                                 <MDButton
                                     type="button"
-                                    size="small"
+                                    size="large"
                                     variant="gradient"
                                     color="info"
                                     fullWidth

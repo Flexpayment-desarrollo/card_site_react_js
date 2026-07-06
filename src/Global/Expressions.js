@@ -9,7 +9,7 @@ export const emailValid = (email) => {
    const reg = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
    if (isNaN(email.trim())) {
       if (!email.match(reg)) {
-         throw new Error('¡Correo no válido!. Intentalo de nuevo');
+         throw new Error('¡Correo no válido!. Inténtalo de nuevo');
       }
    } else {
       throw new Error('Ingresa el correo electrónico');

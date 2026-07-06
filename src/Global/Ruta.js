@@ -22,6 +22,7 @@ import { View_TransferCardToCard } from "View/CardDetail/View_TransferCardToCard
 import { View_Transferir } from "View/Card/View_Transferir";
 import { View_PreviewTransferencia } from "View/Card/View_PreviewTransferencia";
 import { View_SuccessTransfer } from "View/Card/View_SuccessTransfer";
+import { View_MovementDetail } from "View/CardDetail/View_MovementsDetail";
 
 const rutasMenu = [];
 
@@ -79,6 +80,8 @@ const Ruta = () => {
                <Route path="Transfer" element={<View_Transferir reloadMenu={reloadMenu} />} />
                <Route path="Preview" element={<View_PreviewTransferencia reloadMenu={reloadMenu} />} />
                <Route path="SuccessTransfer" element={<View_SuccessTransfer reloadMenu={reloadMenu} />} />
+
+               <Route path="MovementDetail" element={<View_MovementDetail reloadMenu={reloadMenu} />} />
 
                {/* RUTAS DE INICIO DE SESIÓN */}
                <Route path="Registration" element={<View_Registration reloadMenu={reloadMenu} />} />

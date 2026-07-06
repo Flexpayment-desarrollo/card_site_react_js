@@ -4,8 +4,6 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import Transaction from "layouts/pages/account/billing/components/Transaction";
 import { Card, Icon } from "@mui/material";
-
-// Configuración global de idioma
 dayjs.locale('es');
 
 export const Component_TableMovmentsCard = ({ listMovimientos }) => {
@@ -44,6 +42,7 @@ export const Component_TableMovmentsCard = ({ listMovimientos }) => {
         })}`,
       });
     });
+
 
     // Convertir el objeto de grupos en el array de secciones
     return Object.keys(grupos).map((key) => ({

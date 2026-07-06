@@ -55,7 +55,6 @@
 	}
 } */
 
-
 :root {
 	--loader-size: 800px;
 	/* Tamaño para escritorio */
@@ -68,6 +67,7 @@
 	}
 }
 
+/* Contenedor principal centrado absolutamente en la pantalla */
 .container-center {
 	position: absolute;
 	top: 50%;
@@ -78,24 +78,27 @@
 	align-items: center;
 }
 
-/* Contenedor principal centrado */
+/* Contenedor del loading (Círculo exterior) */
 .container-loading {
-	width: 250px;
-	height: 250px;
+	width: 300px;
+	height: 300px;
+	position: relative;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	position: relative;
 	margin: auto;
 }
 
-/* El Logo de EasyCard más pequeño */
-.loader-img {
-	width: 200px;
-	/* Ajustado para que quepa bien dentro del círculo de 100px */
-	height: auto;
-	z-index: 5;
-	position: relative;
+/* Clase loader: ahora con Flexbox para centrar perfectamente el logo en su interior */
+.loader {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 /* El efecto de carga (Círculo de brillo) */
@@ -107,26 +110,42 @@
 	width: 100%;
 	height: 100%;
 	border-radius: 50%;
-	/* Sombras mucho más cortas para que no se vea "gigante" */
+	/* Sombras cortas */
 	box-shadow:
 		0 -4px 10px #ffffff60 inset,
 		0 4px 10px #ffffff60;
 	filter: blur(2px);
 	animation: rotate 2s linear infinite;
+	box-sizing: border-box;
+}
+
+/* El Logo de EasyCard centrado matemática y ópticamente */
+.loader-img {
+	width: 200px;
+	height: auto;
+	z-index: 5;
+	position: relative;
+
+	/* AJUSTE ÓPTICO: Como el logo tiene tarjetas inclinadas hacia la derecha, */
+	/* se mueve 6 píxeles a la izquierda para que se vea perfectamente centrado a la vista. */
+	transform: translateX(-6px);
 }
 
 /* Ajuste específico para celulares muy pequeños */
 @media only screen and (max-width: 480px) {
 	.container-loading {
-		width: 200px;
-		height: 200px;
+		width: 220px;
+		height: 220px;
 	}
 
 	.loader-img {
 		width: 150px;
+		/* Reajuste óptico proporcional para móvil */
+		transform: translateX(-4px);
 	}
 }
 
+/* Animación de rotación */
 @keyframes rotate {
 	from {
 		transform: rotate(0deg);

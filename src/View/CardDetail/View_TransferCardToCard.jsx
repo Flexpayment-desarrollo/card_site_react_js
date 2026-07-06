@@ -56,6 +56,18 @@ export const View_TransferCardToCard = () => {
   });
 
   useEffect(() => {
+    setFormData(Data);
+    setErrorFlag({
+      monto: false,
+      montoMsg: "",
+      tarjeta: false,
+      tarjetaMsg: "",
+    });
+  }, [id]);
+
+  // EFECTO EXCLUSIVO PARA EL TIMER DE LA ALERTA
+  // Este solo se ejecutará cuando la alerta aparezca o cambie
+  useEffect(() => {
     if (isAlertValide && message.isShow) {
       const timer = setTimeout(() => {
         setIsAlertValide(false);
@@ -64,15 +76,7 @@ export const View_TransferCardToCard = () => {
 
       return () => clearTimeout(timer);
     }
-
-    setFormData(Data);
-    setErrorFlag({
-      monto: false,
-      montoMsg: "",
-      tarjeta: false,
-      tarjetaMsg: "",
-    });
-  }, [id, isAlertValide, message.isShow]);
+  }, [isAlertValide, message.isShow]);
 
   //Método para hacer una dispersión a monedero
   const transferir = async (e) => {

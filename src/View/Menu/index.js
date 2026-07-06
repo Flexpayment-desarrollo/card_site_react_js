@@ -94,14 +94,14 @@ const MenuNew = () => {
             icon: chooseIcon(),
             noCollapse: true,
         });
-        rutasMenu.push({
-            type: "collapse",
-            name: "Transferencias",
-            // key: item.idModulo,
-            // route: item.url,
-            icon: chooseIcon(),
-            noCollapse: true,
-        });
+        // rutasMenu.push({
+        //     type: "collapse",
+        //     name: "Transferencias",
+        //     // key: item.idModulo,
+        //     // route: item.url,
+        //     icon: chooseIcon(),
+        //     noCollapse: true,
+        // });
         // } else {
         //     collapse.push({
         //         name: item.modulo,
